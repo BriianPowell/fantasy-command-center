@@ -1,0 +1,31 @@
+{
+  "name": "fantasy-football-tooling",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "homepage": "https://briianpowell.github.io/fantasy-football-tooling/",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "deploy": "npm run build && gh-pages -d dist"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "vite": "latest",
+    "typescript": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "latest",
+    "@testing-library/react": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "gh-pages": "latest",
+    "jsdom": "latest",
+    "vitest": "latest"
+  }
+}
