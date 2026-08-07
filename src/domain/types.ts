@@ -156,14 +156,6 @@ export interface DraftRecommendation {
   notes: string[];
 }
 
-export interface WeeklyRecommendation {
-  player: Player;
-  projection?: Projection;
-  confidence: number;
-  strategyScore?: number;
-  reason: string;
-}
-
 export interface NormalizedLeagueData {
   league: League;
   teams: FantasyTeam[];

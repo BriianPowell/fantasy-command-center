@@ -254,7 +254,6 @@ p {
 }
 
 .panel::before,
-.player-card::before,
 .league-dashboard::before {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.28), transparent 36%, rgba(99, 102, 241, 0.18));
   border-radius: inherit;
@@ -267,19 +266,6 @@ p {
   padding: 1px;
   pointer-events: none;
   position: absolute;
-}
-
-.grid-panel,
-.weekly-grid {
-  align-items: end;
-  display: grid;
-  gap: 1rem;
-  grid-template-columns: 2fr 0.8fr auto;
-}
-
-.grid-panel {
-  align-items: center;
-  grid-template-columns: 2fr 1.5fr repeat(2, 0.7fr);
 }
 
 .league-dashboard {
@@ -345,7 +331,6 @@ p {
   padding: 1rem;
 }
 
-.recommendation-list,
 .pick-list {
   display: grid;
   gap: 0.75rem;
@@ -355,36 +340,6 @@ p {
   gap: 0.5rem;
 }
 
-.player-card {
-  align-items: center;
-  background: rgba(7, 11, 24, 0.52);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 1rem;
-  display: flex;
-  gap: 1rem;
-  justify-content: space-between;
-  padding: 1rem;
-  position: relative;
-  transition:
-    border-color 160ms ease,
-    transform 160ms ease,
-    box-shadow 160ms ease;
-}
-
-.player-card:hover {
-  border-color: rgba(125, 211, 252, 0.42);
-  box-shadow: 0 18px 50px rgba(36, 87, 245, 0.18);
-  transform: translateY(-1px);
-}
-
-.player-title {
-  align-items: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.player-title span,
 .note-list span {
   background: rgba(96, 165, 250, 0.15);
   border-radius: 999px;
@@ -394,41 +349,10 @@ p {
   padding: 0.25rem 0.55rem;
 }
 
-.player-card p {
-  color: #9aa8c7;
-  margin-bottom: 0.45rem;
-}
-
 .note-list {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
-}
-
-.metric {
-  background: rgba(7, 11, 24, 0.44);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 1rem;
-  padding: 1rem;
-}
-
-.metric span {
-  color: #9aa8c7;
-  display: block;
-  font-size: 0.8rem;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.metric strong {
-  display: block;
-  font-size: 1.5rem;
-  margin-top: 0.25rem;
-}
-
-.weekly-grid {
-  align-items: stretch;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 code {
@@ -443,9 +367,7 @@ code {
 }
 
 @media (max-width: 900px) {
-  .top-bar,
-  .grid-panel,
-  .weekly-grid {
+  .top-bar {
     grid-template-columns: 1fr;
   }
 
@@ -469,11 +391,6 @@ code {
   .league-tab {
     flex: 0 0 auto;
     max-width: 80vw;
-  }
-
-  .player-card {
-    align-items: start;
-    flex-direction: column;
   }
 
 }

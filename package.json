@@ -1,7 +1,7 @@
 {
   "name": "fantasy-command-center",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "homepage": "https://briianpowell.github.io/fantasy-command-center/",
   "scripts": {
@@ -10,6 +10,11 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "prepare": "husky",
     "deploy": "npm run build && gh-pages -d dist"
   },
   "dependencies": {
@@ -20,12 +25,28 @@
     "react-dom": "latest"
   },
   "devDependencies": {
+    "@eslint/js": "^9",
     "@testing-library/jest-dom": "latest",
     "@testing-library/react": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
+    "eslint": "^9",
+    "eslint-config-prettier": "latest",
+    "eslint-import-resolver-typescript": "latest",
+    "eslint-plugin-import": "latest",
+    "eslint-plugin-react-hooks": "latest",
+    "eslint-plugin-react-refresh": "latest",
     "gh-pages": "latest",
+    "globals": "latest",
+    "husky": "latest",
     "jsdom": "latest",
+    "lint-staged": "latest",
+    "prettier": "latest",
+    "typescript-eslint": "^8",
     "vitest": "latest"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,css,md}": "prettier --write",
+    "*.{ts,tsx}": "eslint --fix"
   }
 }

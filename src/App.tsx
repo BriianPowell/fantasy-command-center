@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { buildDraftRecommendations } from "./analysis/draftRecommendations";
 import { fantasyConfig } from "./config/fantasyConfig";
 import { defaultPlayerNotes, defaultProjections, defaultRankings } from "./data/defaultInputs";
-import type { NormalizedLeagueData, Player, Roster } from "./domain/types";
+import type { NflState, NormalizedLeagueData, Player, Roster } from "./domain/types";
 import { DraftPickHelperModule } from "./modules/draft/DraftPickHelperModule";
 import { TeamTrackerModule } from "./modules/team-tracker/TeamTrackerModule";
 import { loadNflTeamByeWeeks } from "./providers/schedule/nflScheduleApi";
@@ -20,12 +20,13 @@ const defaultMinimizedModules: Record<DashboardModuleId, boolean> = {
 };
 
 export function App() {
-  const selectedWeek = getCurrentNflWeek();
+  const fallbackWeek = getCurrentNflWeek();
   const [leagues, setLeagues] = useState<NormalizedLeagueData[]>([]);
   const [activeDashboardId, setActiveDashboardId] = useState(() => loadJson("fcc:active-dashboard-id", ""));
   const [minimizedModules, setMinimizedModules] = useState<Record<DashboardModuleId, boolean>>(() =>
     ({ ...defaultMinimizedModules, ...loadJson("fcc:minimized-modules", defaultMinimizedModules) })
   );
+  const [nflState, setNflState] = useState<NflState | undefined>();
   const [status, setStatus] = useState("Loading configured Sleeper leagues...");
   const [errors, setErrors] = useState<string[]>([]);
   const hasAutoLoaded = useRef(false);
@@ -48,17 +49,26 @@ export function App() {
     setErrors([]);
     setStatus(`Loading ${configuredLeagueIds.length} Sleeper league${configuredLeagueIds.length === 1 ? "" : "s"}...`);
 
-    const results = await Promise.allSettled(configuredLeagueIds.map((leagueId) => sleeperProvider.loadLeagueShellData(leagueId)));
+    const [nflStateResult, ...results] = await Promise.allSettled([
+      sleeperProvider.loadNflState(),
+      ...configuredLeagueIds.map((leagueId) => sleeperProvider.loadLeagueShellData(leagueId))
+    ]);
+
+    if (nflStateResult.status === "fulfilled") {
+      setNflState(nflStateResult.value);
+    }
+
     const loadedLeagues = results.flatMap((result) => (result.status === "fulfilled" ? [result.value] : []));
     const loadErrors = results.flatMap((result, index) =>
       result.status === "rejected" ? [`${configuredLeagueIds[index]}: ${readError(result.reason)}`] : []
     );
+    const nflStateErrors = nflStateResult.status === "rejected" ? [`NFL state: ${readError(nflStateResult.reason)}`] : [];
 
     setLeagues(loadedLeagues);
     setActiveDashboardId((current) =>
       current && loadedLeagues.some((league) => league.league.id === current) ? current : loadedLeagues[0]?.league.id ?? ""
     );
-    setErrors(loadErrors);
+    setErrors([...loadErrors, ...nflStateErrors]);
     setStatus(
       loadedLeagues.length
         ? `Loaded ${loadedLeagues.length} dashboard${loadedLeagues.length === 1 ? "" : "s"}. Loading player pool...`
@@ -98,7 +108,7 @@ export function App() {
         activeDashboardId={activeLeague?.league.id ?? ""}
         leagueIds={configuredLeagueIds}
         leagues={leagues}
-        selectedWeek={selectedWeek}
+        weekLabel={formatNflWeekLabel(nflState, fallbackWeek)}
         status={status}
         onActiveDashboardChange={setActiveDashboardId}
       />
@@ -131,14 +141,14 @@ function TopBar({
   activeDashboardId,
   leagueIds,
   leagues,
-  selectedWeek,
+  weekLabel,
   status,
   onActiveDashboardChange
 }: {
   activeDashboardId: string;
   leagueIds: string[];
   leagues: NormalizedLeagueData[];
-  selectedWeek: number;
+  weekLabel: string;
   status: string;
   onActiveDashboardChange: (leagueId: string) => void;
 }) {
@@ -169,9 +179,27 @@ function TopBar({
         )}
       </nav>
 
-      <div className="week-pill">Week {selectedWeek}</div>
+      <div className="week-pill">{weekLabel}</div>
     </header>
   );
+}
+
+function formatNflWeekLabel(nflState: NflState | undefined, fallbackWeek: number): string {
+  if (!nflState) {
+    return `Week ${fallbackWeek}`;
+  }
+
+  const week = nflState.displayWeek ?? nflState.week;
+
+  if (nflState.seasonType === "pre") {
+    return `Preseason Week ${week}`;
+  }
+
+  if (nflState.seasonType === "post") {
+    return `Postseason Week ${week}`;
+  }
+
+  return `Week ${week}`;
 }
 
 async function hydratePlayerByeWeeks(players: Player[]): Promise<{ players: Player[]; warning?: string }> {

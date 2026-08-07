@@ -9,7 +9,6 @@ export type LineupSlotType = Position | "FLEX" | "SUPER_FLEX";
 export interface TeamTrackerPlayer {
   id: string;
   isDraftAddition: boolean;
-  isStarter: boolean;
   player: Player;
   primaryPosition: Position;
 }
@@ -24,8 +23,6 @@ export interface TeamTrackerViewModel {
   bench: TeamTrackerPlayer[];
   draftedAdditions: TeamTrackerPlayer[];
   lineupSlots: TeamTrackerLineupSlot[];
-  missingPlayerIds: string[];
-  starters: TeamTrackerPlayer[];
   totalPlayers: number;
 }
 
@@ -44,18 +41,15 @@ export function buildTeamTrackerViewModel({
 }): TeamTrackerViewModel {
   const playersById = new Map(players.map((player) => [player.id, player]));
   const rosterPlayerIds = roster?.playerIds ?? [];
-  const starterIds = new Set(roster?.starters ?? []);
   const draftAdditionIds = draftPicks.flatMap((pick) => (pick.rosterId === selectedTeamId && pick.playerId ? [pick.playerId] : []));
   const draftAdditionIdSet = new Set(draftAdditionIds);
   const trackedPlayerIds = Array.from(new Set([...rosterPlayerIds, ...draftAdditionIds]));
-  const missingPlayerIds: string[] = [];
 
   const trackedPlayers = trackedPlayerIds.flatMap<TeamTrackerPlayer>((playerId) => {
     const player = playersById.get(playerId);
     const primaryPosition = player?.positions[0];
 
     if (!player || !primaryPosition) {
-      missingPlayerIds.push(playerId);
       return [];
     }
 
@@ -63,7 +57,6 @@ export function buildTeamTrackerViewModel({
       {
         id: player.id,
         isDraftAddition: draftAdditionIdSet.has(player.id) && !rosterPlayerIds.includes(player.id),
-        isStarter: starterIds.has(player.id),
         player,
         primaryPosition
       }
@@ -72,7 +65,6 @@ export function buildTeamTrackerViewModel({
 
   const lineupSlots = assignLineupSlots(buildLineupSlots(leagueSettings), roster?.starters ?? [], trackedPlayers);
   const assignedStarterIds = new Set(lineupSlots.flatMap((slot) => (slot.player ? [slot.player.id] : [])));
-  const starters = lineupSlots.flatMap((slot) => (slot.player ? [slot.player] : []));
   const bench = trackedPlayers.filter((player) => !assignedStarterIds.has(player.id));
   const draftedAdditions = trackedPlayers.filter((player) => player.isDraftAddition);
 
@@ -80,8 +72,6 @@ export function buildTeamTrackerViewModel({
     bench,
     draftedAdditions,
     lineupSlots,
-    missingPlayerIds,
-    starters,
     totalPlayers: trackedPlayers.length
   };
 }
