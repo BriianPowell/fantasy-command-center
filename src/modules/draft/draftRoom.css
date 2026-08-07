@@ -169,9 +169,14 @@
 .draft-position-column {
   --position-color: #60a5fa;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--position-color) 25%, rgba(7, 11, 24, 0.72)), rgba(7, 11, 24, 0.54)),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--position-color) 25%, rgba(7, 11, 24, 0.72)),
+      rgba(7, 11, 24, 0.54)
+    ),
     rgba(7, 11, 24, 0.5);
-  border: 1px solid color-mix(in srgb, var(--position-color) 38%, rgba(255, 255, 255, 0.12));
+  border: 1px solid
+    color-mix(in srgb, var(--position-color) 38%, rgba(255, 255, 255, 0.12));
   border-radius: 1rem;
   box-shadow: 0 18px 44px rgba(0, 0, 0, 0.24);
   max-height: min(82vh, 1360px);
@@ -215,8 +220,11 @@
 
 .draft-position-header {
   align-items: center;
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--position-color) 30%, #101827), #111827);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--position-color) 30%, #101827),
+    #111827
+  );
   box-shadow: 0 10px 18px rgba(3, 7, 18, 0.28);
   display: flex;
   gap: 0.75rem;
@@ -229,9 +237,14 @@
 }
 
 .draft-position-header::after {
-  background: linear-gradient(180deg, #111827 0%, rgba(17, 24, 39, 0.74) 45%, transparent 100%);
+  background: linear-gradient(
+    180deg,
+    #111827 0%,
+    rgba(17, 24, 39, 0.74) 45%,
+    transparent 100%
+  );
   bottom: -1.6rem;
-  content: "";
+  content: '';
   cursor: default;
   height: 1.6rem;
   left: 0;
@@ -287,9 +300,14 @@
 .draft-player-tile {
   align-content: center;
   background:
-    linear-gradient(135deg, color-mix(in srgb, var(--position-color) 22%, rgba(255, 255, 255, 0.08)), rgba(3, 7, 18, 0.52)),
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--position-color) 22%, rgba(255, 255, 255, 0.08)),
+      rgba(3, 7, 18, 0.52)
+    ),
     rgba(3, 7, 18, 0.58);
-  border: 1px solid color-mix(in srgb, var(--position-color) 28%, rgba(255, 255, 255, 0.08));
+  border: 1px solid
+    color-mix(in srgb, var(--position-color) 28%, rgba(255, 255, 255, 0.08));
   border-radius: 0.75rem;
   display: grid;
   gap: 0.32rem;
@@ -304,7 +322,8 @@
 
 .draft-player-tile:hover {
   border-color: color-mix(in srgb, var(--position-color) 55%, white);
-  box-shadow: 0 14px 34px color-mix(in srgb, var(--position-color) 18%, transparent);
+  box-shadow: 0 14px 34px
+    color-mix(in srgb, var(--position-color) 18%, transparent);
 }
 
 .draft-player-tile:focus-visible {
@@ -321,7 +340,11 @@
 
 .why-popover {
   background:
-    radial-gradient(circle at top left, rgba(96, 165, 250, 0.18), transparent 20rem),
+    radial-gradient(
+      circle at top left,
+      rgba(96, 165, 250, 0.18),
+      transparent 20rem
+    ),
     #101827;
   border: 1px solid rgba(147, 197, 253, 0.24);
   border-radius: 0.85rem;
@@ -421,5 +444,4 @@
     grid-template-columns: repeat(5, minmax(155px, 1fr));
     overflow-x: auto;
   }
-
 }

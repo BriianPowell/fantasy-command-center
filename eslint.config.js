@@ -46,7 +46,14 @@ export default [
             caseInsensitive: true,
             order: 'asc',
           },
-          groups: ['builtin', 'external', 'internal', 'sibling', 'parent', 'index'],
+          groups: [
+            'builtin',
+            'external',
+            'internal',
+            'sibling',
+            'parent',
+            'index',
+          ],
           pathGroups: [
             {
               group: 'external',
@@ -64,7 +71,10 @@ export default [
       ],
       'no-console': 'warn',
       'prefer-template': 'error',
-      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      'react-refresh/only-export-components': [
+        'warn',
+        { allowConstantExport: true },
+      ],
       'sort-imports': [
         'error',
         {

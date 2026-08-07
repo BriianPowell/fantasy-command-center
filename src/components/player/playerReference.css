@@ -10,10 +10,23 @@
 
 .draft-pick-reference-tile {
   background:
-    linear-gradient(135deg, color-mix(in srgb, var(--position-color, #60a5fa) 16%, rgba(255, 255, 255, 0.06)), rgba(3, 7, 18, 0.5)),
+    linear-gradient(
+      135deg,
+      color-mix(
+        in srgb,
+        var(--position-color, #60a5fa) 16%,
+        rgba(255, 255, 255, 0.06)
+      ),
+      rgba(3, 7, 18, 0.5)
+    ),
     rgba(15, 23, 42, 0.58);
-  border-color: color-mix(in srgb, var(--position-color, #60a5fa) 28%, rgba(255, 255, 255, 0.08));
-  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--position-color, #60a5fa) 74%, transparent);
+  border-color: color-mix(
+    in srgb,
+    var(--position-color, #60a5fa) 28%,
+    rgba(255, 255, 255, 0.08)
+  );
+  box-shadow: inset 3px 0 0
+    color-mix(in srgb, var(--position-color, #60a5fa) 74%, transparent);
 }
 
 .draft-pick-reference-tile.roster-style {
@@ -176,8 +189,17 @@
 }
 
 .player-reference-trailing {
-  background: color-mix(in srgb, var(--position-color, #60a5fa) 28%, rgba(3, 7, 18, 0.72));
-  border: 1px solid color-mix(in srgb, var(--position-color, #60a5fa) 38%, rgba(255, 255, 255, 0.1));
+  background: color-mix(
+    in srgb,
+    var(--position-color, #60a5fa) 28%,
+    rgba(3, 7, 18, 0.72)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--position-color, #60a5fa) 38%,
+      rgba(255, 255, 255, 0.1)
+    );
   color: #e5ecff;
   font-size: 0.9rem;
   margin-left: auto;

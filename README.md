@@ -23,13 +23,15 @@ npm install
 npm run dev
 ```
 
-Build for GitHub Pages:
+Build locally for GitHub Pages:
 
 ```sh
 npm run build
 ```
 
-Deploy to GitHub Pages:
+Deployments are handled by `.github/workflows/deploy-pages.yml` when changes land on `main`. In the repository settings, configure GitHub Pages to use **GitHub Actions** as the source.
+
+Manual deploys through the `gh-pages` package are still available:
 
 ```sh
 npm run deploy
@@ -41,10 +43,14 @@ The app reads its default league setup from `src/config/fantasyConfig.ts`:
 
 ```ts
 export const fantasyConfig = {
-  season: "2026",
-  sleeperLeagueIds: ["1312240875861979136", "1357563614201933824", "1389723007303307266"],
-  sleeperUsernames: ["boog", "BooooooooG"]
-} as const;
+  season: '2026',
+  sleeperLeagueIds: [
+    '1312240875861979136',
+    '1357563614201933824',
+    '1389723007303307266',
+  ],
+  sleeperUsernames: ['boog', 'BooooooooG'],
+} as const
 ```
 
 Configured leagues auto-load when the site opens. The main layout is a command center shell with top-bar tabs for each league and a read-only NFL state badge. League, roster, and draft data load first; the larger Sleeper player pool fills in afterward for draft recommendations. The Sleeper provider also exposes lazy methods for NFL state, matchups, transactions, traded picks, and trending players as later modules need them. Each selected league dashboard currently focuses on the Team Tracker and Draft Room modules. When one of the configured usernames owns a team in a league, the dashboard narrows to that team.

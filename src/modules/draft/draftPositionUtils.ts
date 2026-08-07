@@ -1,33 +1,49 @@
-import type { DraftRecommendation, Position } from "../../domain/types";
-import { getPrimaryPosition } from "../../domain/positionUtils";
+import { getPrimaryPosition } from '../../domain/positionUtils'
+import type { DraftRecommendation, Position } from '../../domain/types'
 
-export { getPositionClass, getPrimaryPosition } from "../../domain/positionUtils";
+export {
+  getPositionClass,
+  getPrimaryPosition,
+} from '../../domain/positionUtils'
 
-const HIDDEN_DRAFT_POSITIONS = new Set<Position>(["DB", "DL", "LB", "IDP"]);
-const PREFERRED_POSITION_ORDER: Position[] = ["QB", "RB", "WR", "TE", "K", "DEF"];
+const HIDDEN_DRAFT_POSITIONS = new Set<Position>(['DB', 'DL', 'LB', 'IDP'])
+const PREFERRED_POSITION_ORDER: Position[] = [
+  'QB',
+  'RB',
+  'WR',
+  'TE',
+  'K',
+  'DEF',
+]
 
-export function groupRecommendationsByPosition(recommendations: DraftRecommendation[]): Map<Position, DraftRecommendation[]> {
-  const grouped = new Map<Position, DraftRecommendation[]>();
+export function groupRecommendationsByPosition(
+  recommendations: DraftRecommendation[]
+): Map<Position, DraftRecommendation[]> {
+  const grouped = new Map<Position, DraftRecommendation[]>()
 
   for (const recommendation of recommendations) {
-    const position = getPrimaryPosition(recommendation.player.positions);
+    const position = getPrimaryPosition(recommendation.player.positions)
 
     if (!position) {
-      continue;
+      continue
     }
 
-    grouped.set(position, [...(grouped.get(position) ?? []), recommendation]);
+    grouped.set(position, [...(grouped.get(position) ?? []), recommendation])
   }
 
-  return grouped;
+  return grouped
 }
 
-export function getVisiblePositions(groupedRecommendations: Map<Position, DraftRecommendation[]>): Position[] {
+export function getVisiblePositions(
+  groupedRecommendations: Map<Position, DraftRecommendation[]>
+): Position[] {
   const remainingPositions = Array.from(groupedRecommendations.keys()).filter(
     (position) => !PREFERRED_POSITION_ORDER.includes(position)
-  );
+  )
 
   return [...PREFERRED_POSITION_ORDER, ...remainingPositions].filter(
-    (position) => !HIDDEN_DRAFT_POSITIONS.has(position) && (groupedRecommendations.get(position)?.length ?? 0) > 0
-  );
+    (position) =>
+      !HIDDEN_DRAFT_POSITIONS.has(position) &&
+      (groupedRecommendations.get(position)?.length ?? 0) > 0
+  )
 }

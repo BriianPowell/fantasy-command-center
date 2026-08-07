@@ -1,111 +1,152 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { buildDraftRecommendations } from "./analysis/draftRecommendations";
-import { fantasyConfig } from "./config/fantasyConfig";
-import { defaultPlayerNotes, defaultProjections, defaultRankings } from "./data/defaultInputs";
-import type { NflState, NormalizedLeagueData, Player, Roster } from "./domain/types";
-import { DraftPickHelperModule } from "./modules/draft/DraftPickHelperModule";
-import { TeamTrackerModule } from "./modules/team-tracker/TeamTrackerModule";
-import { loadNflTeamByeWeeks } from "./providers/schedule/nflScheduleApi";
-import { SleeperProvider } from "./providers/sleeper/SleeperProvider";
-import { loadJson, saveJson } from "./storage/localStorage";
-import { buildStrategyContext } from "./strategy/teamOpportunity";
-import { getCurrentNflWeek } from "./utils/nflWeek";
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { buildDraftRecommendations } from './analysis/draftRecommendations'
+import { fantasyConfig } from './config/fantasyConfig'
+import {
+  defaultPlayerNotes,
+  defaultProjections,
+  defaultRankings,
+} from './data/defaultInputs'
+import type {
+  NflState,
+  NormalizedLeagueData,
+  Player,
+  Roster,
+} from './domain/types'
+import { DraftPickHelperModule } from './modules/draft'
+import { TeamTrackerModule } from './modules/team-tracker/TeamTrackerModule'
+import { loadNflTeamByeWeeks } from './providers/schedule/nflScheduleApi'
+import { SleeperProvider } from './providers/sleeper/SleeperProvider'
+import { loadJson, saveJson } from './storage/localStorage'
+import { buildStrategyContext } from './strategy/teamOpportunity'
+import { getCurrentNflWeek } from './utils/nflWeek'
 
-const sleeperProvider = new SleeperProvider();
-const configuredLeagueIds = [...fantasyConfig.sleeperLeagueIds];
-type DashboardModuleId = "teamTracker" | "draftRoom";
+const sleeperProvider = new SleeperProvider()
+const configuredLeagueIds = [...fantasyConfig.sleeperLeagueIds]
+type DashboardModuleId = 'teamTracker' | 'draftRoom'
 const defaultMinimizedModules: Record<DashboardModuleId, boolean> = {
   draftRoom: false,
-  teamTracker: false
-};
+  teamTracker: false,
+}
 
 export function App() {
-  const fallbackWeek = getCurrentNflWeek();
-  const [leagues, setLeagues] = useState<NormalizedLeagueData[]>([]);
-  const [activeDashboardId, setActiveDashboardId] = useState(() => loadJson("fcc:active-dashboard-id", ""));
-  const [minimizedModules, setMinimizedModules] = useState<Record<DashboardModuleId, boolean>>(() =>
-    ({ ...defaultMinimizedModules, ...loadJson("fcc:minimized-modules", defaultMinimizedModules) })
-  );
-  const [nflState, setNflState] = useState<NflState | undefined>();
-  const [status, setStatus] = useState("Loading configured Sleeper leagues...");
-  const [errors, setErrors] = useState<string[]>([]);
-  const hasAutoLoaded = useRef(false);
+  const fallbackWeek = getCurrentNflWeek()
+  const [leagues, setLeagues] = useState<NormalizedLeagueData[]>([])
+  const [activeDashboardId, setActiveDashboardId] = useState(() =>
+    loadJson('fcc:active-dashboard-id', '')
+  )
+  const [minimizedModules, setMinimizedModules] = useState<
+    Record<DashboardModuleId, boolean>
+  >(() => ({
+    ...defaultMinimizedModules,
+    ...loadJson('fcc:minimized-modules', defaultMinimizedModules),
+  }))
+  const [nflState, setNflState] = useState<NflState | undefined>()
+  const [status, setStatus] = useState('Loading configured Sleeper leagues...')
+  const [errors, setErrors] = useState<string[]>([])
+  const hasAutoLoaded = useRef(false)
 
   useEffect(() => {
-    saveJson("fcc:active-dashboard-id", activeDashboardId);
-    saveJson("fcc:minimized-modules", minimizedModules);
-  }, [activeDashboardId, minimizedModules]);
+    saveJson('fcc:active-dashboard-id', activeDashboardId)
+    saveJson('fcc:minimized-modules', minimizedModules)
+  }, [activeDashboardId, minimizedModules])
 
   useEffect(() => {
     if (hasAutoLoaded.current || !configuredLeagueIds.length) {
-      return;
+      return
     }
 
-    hasAutoLoaded.current = true;
-    void loadLeagues();
-  }, []);
+    hasAutoLoaded.current = true
+    void loadLeagues()
+  }, [])
 
   async function loadLeagues() {
-    setErrors([]);
-    setStatus(`Loading ${configuredLeagueIds.length} Sleeper league${configuredLeagueIds.length === 1 ? "" : "s"}...`);
+    setErrors([])
+    setStatus(
+      `Loading ${configuredLeagueIds.length} Sleeper league${configuredLeagueIds.length === 1 ? '' : 's'}...`
+    )
 
     const [nflStateResult, ...results] = await Promise.allSettled([
       sleeperProvider.loadNflState(),
-      ...configuredLeagueIds.map((leagueId) => sleeperProvider.loadLeagueShellData(leagueId))
-    ]);
+      ...configuredLeagueIds.map((leagueId) =>
+        sleeperProvider.loadLeagueShellData(leagueId)
+      ),
+    ])
 
-    if (nflStateResult.status === "fulfilled") {
-      setNflState(nflStateResult.value);
+    if (nflStateResult.status === 'fulfilled') {
+      setNflState(nflStateResult.value)
     }
 
-    const loadedLeagues = results.flatMap((result) => (result.status === "fulfilled" ? [result.value] : []));
+    const loadedLeagues = results.flatMap((result) =>
+      result.status === 'fulfilled' ? [result.value] : []
+    )
     const loadErrors = results.flatMap((result, index) =>
-      result.status === "rejected" ? [`${configuredLeagueIds[index]}: ${readError(result.reason)}`] : []
-    );
-    const nflStateErrors = nflStateResult.status === "rejected" ? [`NFL state: ${readError(nflStateResult.reason)}`] : [];
+      result.status === 'rejected'
+        ? [`${configuredLeagueIds[index]}: ${readError(result.reason)}`]
+        : []
+    )
+    const nflStateErrors =
+      nflStateResult.status === 'rejected'
+        ? [`NFL state: ${readError(nflStateResult.reason)}`]
+        : []
 
-    setLeagues(loadedLeagues);
+    setLeagues(loadedLeagues)
     setActiveDashboardId((current) =>
-      current && loadedLeagues.some((league) => league.league.id === current) ? current : loadedLeagues[0]?.league.id ?? ""
-    );
-    setErrors([...loadErrors, ...nflStateErrors]);
+      current && loadedLeagues.some((league) => league.league.id === current)
+        ? current
+        : (loadedLeagues[0]?.league.id ?? '')
+    )
+    setErrors([...loadErrors, ...nflStateErrors])
     setStatus(
       loadedLeagues.length
-        ? `Loaded ${loadedLeagues.length} dashboard${loadedLeagues.length === 1 ? "" : "s"}. Loading player pool...`
-        : "No leagues loaded."
-    );
+        ? `Loaded ${loadedLeagues.length} dashboard${loadedLeagues.length === 1 ? '' : 's'}. Loading player pool...`
+        : 'No leagues loaded.'
+    )
 
     if (!loadedLeagues.length) {
-      return;
+      return
     }
 
     try {
-      const players = await sleeperProvider.loadPlayers();
-      const { players: playersWithByeWeeks, warning: byeWeekWarning } = await hydratePlayerByeWeeks(players);
-      const loadedLeagueIds = new Set(loadedLeagues.map((league) => league.league.id));
+      const players = await sleeperProvider.loadPlayers()
+      const { players: playersWithByeWeeks, warning: byeWeekWarning } =
+        await hydratePlayerByeWeeks(players)
+      const loadedLeagueIds = new Set(
+        loadedLeagues.map((league) => league.league.id)
+      )
 
       if (byeWeekWarning) {
-        setErrors((current) => [...current, byeWeekWarning]);
+        setErrors((current) => [...current, byeWeekWarning])
       }
 
       setLeagues((current) =>
-        current.map((league) => (loadedLeagueIds.has(league.league.id) ? { ...league, players: playersWithByeWeeks } : league))
-      );
+        current.map((league) =>
+          loadedLeagueIds.has(league.league.id)
+            ? { ...league, players: playersWithByeWeeks }
+            : league
+        )
+      )
       setStatus(
-        `Loaded ${loadedLeagues.length} league${loadedLeagues.length === 1 ? "" : "s"}. Player pool ready.`
-      );
+        `Loaded ${loadedLeagues.length} league${loadedLeagues.length === 1 ? '' : 's'}. Player pool ready.`
+      )
     } catch (caughtError) {
-      setErrors((current) => [...current, `Player pool: ${readError(caughtError)}`]);
-      setStatus(`Loaded ${loadedLeagues.length} dashboard${loadedLeagues.length === 1 ? "" : "s"} without player metadata.`);
+      setErrors((current) => [
+        ...current,
+        `Player pool: ${readError(caughtError)}`,
+      ])
+      setStatus(
+        `Loaded ${loadedLeagues.length} dashboard${loadedLeagues.length === 1 ? '' : 's'} without player metadata.`
+      )
     }
   }
 
-  const activeLeague = leagues.find((league) => league.league.id === activeDashboardId) ?? leagues[0];
+  const activeLeague =
+    leagues.find((league) => league.league.id === activeDashboardId) ??
+    leagues[0]
 
   return (
     <main className="app-shell">
       <TopBar
-        activeDashboardId={activeLeague?.league.id ?? ""}
+        activeDashboardId={activeLeague?.league.id ?? ''}
         leagueIds={configuredLeagueIds}
         leagues={leagues}
         weekLabel={formatNflWeekLabel(nflState, fallbackWeek)}
@@ -126,7 +167,7 @@ export function App() {
           onToggleModule={(moduleId) =>
             setMinimizedModules((current) => ({
               ...current,
-              [moduleId]: !current[moduleId]
+              [moduleId]: !current[moduleId],
             }))
           }
         />
@@ -134,7 +175,7 @@ export function App() {
         <EmptyState />
       )}
     </main>
-  );
+  )
 }
 
 function TopBar({
@@ -143,14 +184,14 @@ function TopBar({
   leagues,
   weekLabel,
   status,
-  onActiveDashboardChange
+  onActiveDashboardChange,
 }: {
-  activeDashboardId: string;
-  leagueIds: string[];
-  leagues: NormalizedLeagueData[];
-  weekLabel: string;
-  status: string;
-  onActiveDashboardChange: (leagueId: string) => void;
+  activeDashboardId: string
+  leagueIds: string[]
+  leagues: NormalizedLeagueData[]
+  weekLabel: string
+  status: string
+  onActiveDashboardChange: (leagueId: string) => void
 }) {
   return (
     <header className="top-bar">
@@ -166,7 +207,11 @@ function TopBar({
         {leagues.length ? (
           leagues.map((league) => (
             <button
-              className={league.league.id === activeDashboardId ? "league-tab active" : "league-tab"}
+              className={
+                league.league.id === activeDashboardId
+                  ? 'league-tab active'
+                  : 'league-tab'
+              }
               key={league.league.id}
               onClick={() => onActiveDashboardChange(league.league.id)}
               type="button"
@@ -175,49 +220,58 @@ function TopBar({
             </button>
           ))
         ) : (
-          <span className="league-tabs-loading">Loading {leagueIds.length} leagues...</span>
+          <span className="league-tabs-loading">
+            Loading {leagueIds.length} leagues...
+          </span>
         )}
       </nav>
 
       <div className="week-pill">{weekLabel}</div>
     </header>
-  );
+  )
 }
 
-function formatNflWeekLabel(nflState: NflState | undefined, fallbackWeek: number): string {
+function formatNflWeekLabel(
+  nflState: NflState | undefined,
+  fallbackWeek: number
+): string {
   if (!nflState) {
-    return `Week ${fallbackWeek}`;
+    return `Week ${fallbackWeek}`
   }
 
-  const week = nflState.displayWeek ?? nflState.week;
+  const week = nflState.displayWeek ?? nflState.week
 
-  if (nflState.seasonType === "pre") {
-    return `Preseason Week ${week}`;
+  if (nflState.seasonType === 'pre') {
+    return `Preseason Week ${week}`
   }
 
-  if (nflState.seasonType === "post") {
-    return `Postseason Week ${week}`;
+  if (nflState.seasonType === 'post') {
+    return `Postseason Week ${week}`
   }
 
-  return `Week ${week}`;
+  return `Week ${week}`
 }
 
-async function hydratePlayerByeWeeks(players: Player[]): Promise<{ players: Player[]; warning?: string }> {
+async function hydratePlayerByeWeeks(
+  players: Player[]
+): Promise<{ players: Player[]; warning?: string }> {
   try {
-    const teamByeWeeks = await loadNflTeamByeWeeks(fantasyConfig.season);
+    const teamByeWeeks = await loadNflTeamByeWeeks(fantasyConfig.season)
 
     return {
       players: players.map((player) => {
-        const byeWeek = player.byeWeek ?? (player.team ? teamByeWeeks[player.team] : undefined);
+        const byeWeek =
+          player.byeWeek ??
+          (player.team ? teamByeWeeks[player.team] : undefined)
 
-        return byeWeek ? { ...player, byeWeek } : player;
-      })
-    };
+        return byeWeek ? { ...player, byeWeek } : player
+      }),
+    }
   } catch (caughtError) {
     return {
       players,
-      warning: `Bye-week schedule: ${readError(caughtError)}`
-    };
+      warning: `Bye-week schedule: ${readError(caughtError)}`,
+    }
   }
 }
 
@@ -225,29 +279,35 @@ function LeagueDashboard({
   data,
   minimizedModules,
   onToggleModule,
-  selectedTeamId
+  selectedTeamId,
 }: {
-  data: NormalizedLeagueData;
-  minimizedModules: Record<DashboardModuleId, boolean>;
-  onToggleModule: (moduleId: DashboardModuleId) => void;
-  selectedTeamId: string;
+  data: NormalizedLeagueData
+  minimizedModules: Record<DashboardModuleId, boolean>
+  onToggleModule: (moduleId: DashboardModuleId) => void
+  selectedTeamId: string
 }) {
-  const baseRoster = useMemo(() => data.rosters.find((roster) => roster.teamId === selectedTeamId), [data.rosters, selectedTeamId]);
+  const baseRoster = useMemo(
+    () => data.rosters.find((roster) => roster.teamId === selectedTeamId),
+    [data.rosters, selectedTeamId]
+  )
   const selectedRoster = useMemo(() => {
-    return buildDraftAwareRoster(baseRoster, data, selectedTeamId);
-  }, [baseRoster, data, selectedTeamId]);
+    return buildDraftAwareRoster(baseRoster, data, selectedTeamId)
+  }, [baseRoster, data, selectedTeamId])
 
   const draftedPlayerIds = useMemo(() => {
-    const draftedFromSleeper = data.draft?.picks.flatMap((pick) => (pick.playerId ? [pick.playerId] : [])) ?? [];
+    const draftedFromSleeper =
+      data.draft?.picks.flatMap((pick) =>
+        pick.playerId ? [pick.playerId] : []
+      ) ?? []
 
-    return new Set(draftedFromSleeper);
-  }, [data.draft?.picks]);
+    return new Set(draftedFromSleeper)
+  }, [data.draft?.picks])
 
   const strategyContext = useMemo(() => {
     return buildStrategyContext({
-      players: data.players
-    });
-  }, [data.players]);
+      players: data.players,
+    })
+  }, [data.players])
 
   const recommendations = useMemo(() => {
     return buildDraftRecommendations({
@@ -258,28 +318,34 @@ function LeagueDashboard({
       rankings: defaultRankings,
       projections: defaultProjections,
       notes: defaultPlayerNotes,
-      strategyContext
-    });
-  }, [data.league.settings, data.players, draftedPlayerIds, selectedRoster, strategyContext]);
+      strategyContext,
+    })
+  }, [
+    data.league.settings,
+    data.players,
+    draftedPlayerIds,
+    selectedRoster,
+    strategyContext,
+  ])
 
   return (
     <article className="league-dashboard">
       <TeamTrackerModule
         data={data}
         isMinimized={minimizedModules.teamTracker}
-        onToggleMinimized={() => onToggleModule("teamTracker")}
+        onToggleMinimized={() => onToggleModule('teamTracker')}
         roster={baseRoster}
         selectedTeamId={selectedTeamId}
       />
       <DraftPickHelperModule
         data={data}
         isMinimized={minimizedModules.draftRoom}
-        onToggleMinimized={() => onToggleModule("draftRoom")}
+        onToggleMinimized={() => onToggleModule('draftRoom')}
         recommendations={recommendations}
         selectedTeamId={selectedTeamId}
       />
     </article>
-  );
+  )
 }
 
 function EmptyState() {
@@ -287,44 +353,56 @@ function EmptyState() {
     <section className="panel empty-state">
       <h2>Ready for your leagues</h2>
       <p>
-        Your configured Sleeper leagues and usernames load automatically. Once loaded, choose a dashboard from the top bar to
-        use the draft helper module.
+        Your configured Sleeper leagues and usernames load automatically. Once
+        loaded, choose a dashboard from the top bar to use the draft helper
+        module.
       </p>
     </section>
-  );
+  )
 }
 
-function buildDraftAwareRoster(roster: Roster | undefined, data: NormalizedLeagueData, teamId: string): Roster | undefined {
+function buildDraftAwareRoster(
+  roster: Roster | undefined,
+  data: NormalizedLeagueData,
+  teamId: string
+): Roster | undefined {
   if (!roster) {
-    return undefined;
+    return undefined
   }
 
-  const draftedForTeam = data.draft?.picks.flatMap((pick) => (pick.rosterId === teamId && pick.playerId ? [pick.playerId] : [])) ?? [];
+  const draftedForTeam =
+    data.draft?.picks.flatMap((pick) =>
+      pick.rosterId === teamId && pick.playerId ? [pick.playerId] : []
+    ) ?? []
 
   return {
     ...roster,
-    playerIds: Array.from(new Set([...roster.playerIds, ...draftedForTeam]))
-  };
+    playerIds: Array.from(new Set([...roster.playerIds, ...draftedForTeam])),
+  }
 }
 
 function readError(error: unknown): string {
-  return error instanceof Error ? error.message : "Unknown error";
+  return error instanceof Error ? error.message : 'Unknown error'
 }
 
 function resolveSelectedTeamId(data: NormalizedLeagueData): string {
-  const configuredTeams = data.teams.filter(isConfiguredOwner);
+  const configuredTeams = data.teams.filter(isConfiguredOwner)
 
-  return configuredTeams[0]?.id ?? data.teams[0]?.id ?? "";
+  return configuredTeams[0]?.id ?? data.teams[0]?.id ?? ''
 }
 
-function isConfiguredOwner(team: NormalizedLeagueData["teams"][number]): boolean {
-  const configuredOwners = fantasyConfig.sleeperUsernames.map(normalizeIdentifier);
+function isConfiguredOwner(
+  team: NormalizedLeagueData['teams'][number]
+): boolean {
+  const configuredOwners =
+    fantasyConfig.sleeperUsernames.map(normalizeIdentifier)
 
   return [team.ownerUsername, team.ownerName, team.ownerId].some(
-    (ownerValue) => ownerValue && configuredOwners.includes(normalizeIdentifier(ownerValue))
-  );
+    (ownerValue) =>
+      ownerValue && configuredOwners.includes(normalizeIdentifier(ownerValue))
+  )
 }
 
 function normalizeIdentifier(value: string): string {
-  return value.trim().toLowerCase();
+  return value.trim().toLowerCase()
 }

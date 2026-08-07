@@ -1,24 +1,27 @@
-import type { DraftRecommendation, Position } from "../../domain/types";
-import { getPositionClass } from "./draftPositionUtils";
-import { DraftPlayerTile } from "./DraftPlayerTile";
+import { DraftPlayerTile } from './DraftPlayerTile'
+import { getPositionClass } from './draftPositionUtils'
+import type { DraftRecommendation, Position } from '../../domain/types'
 
 interface DraftPositionColumnProps {
-  hoverCooldownRef: { current: number };
-  onScrollCooldown: () => void;
-  position: Position;
-  recommendations: DraftRecommendation[];
+  hoverCooldownRef: { current: number }
+  onScrollCooldown: () => void
+  position: Position
+  recommendations: DraftRecommendation[]
 }
 
 export function DraftPositionColumn({
   hoverCooldownRef,
   onScrollCooldown,
   position,
-  recommendations
+  recommendations,
 }: DraftPositionColumnProps) {
-  const topRecommendation = recommendations[0];
+  const topRecommendation = recommendations[0]
 
   return (
-    <section className={`draft-position-column ${getPositionClass(position)}`} onScroll={onScrollCooldown}>
+    <section
+      className={`draft-position-column ${getPositionClass(position)}`}
+      onScroll={onScrollCooldown}
+    >
       <header className="draft-position-header">
         <div>
           <h3>{position}</h3>
@@ -26,7 +29,7 @@ export function DraftPositionColumn({
         </div>
         <span className="draft-position-top-score">
           <span>Top</span>
-          <strong>{topRecommendation?.score ?? "-"}</strong>
+          <strong>{topRecommendation?.score ?? '-'}</strong>
         </span>
       </header>
       <div className="draft-player-stack">
@@ -41,5 +44,5 @@ export function DraftPositionColumn({
         ))}
       </div>
     </section>
-  );
+  )
 }

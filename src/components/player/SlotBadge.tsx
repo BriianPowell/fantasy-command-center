@@ -1,7 +1,7 @@
-import "./playerReference.css";
+import './playerReference.css'
 
 export function SlotBadge({ slotLabel }: { slotLabel: string }) {
-  const labels = getSlotBadgeLabels(slotLabel);
+  const labels = getSlotBadgeLabels(slotLabel)
 
   return (
     <span className="slot-label-segments">
@@ -11,17 +11,17 @@ export function SlotBadge({ slotLabel }: { slotLabel: string }) {
         </span>
       ))}
     </span>
-  );
+  )
 }
 
 function getSlotBadgeLabels(slotLabel: string): string[] {
-  if (slotLabel === "FLEX") {
-    return ["W", "R", "T"];
+  if (slotLabel === 'FLEX') {
+    return ['W', 'R', 'T']
   }
 
-  if (slotLabel === "SUPER_FLEX") {
-    return ["W", "R", "T", "Q"];
+  if (slotLabel === 'SUPER_FLEX') {
+    return ['W', 'R', 'T', 'Q']
   }
 
-  return [slotLabel];
+  return [slotLabel]
 }

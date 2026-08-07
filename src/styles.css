@@ -2,7 +2,13 @@
   color: #e5ecff;
   background: #070b18;
   font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
 }
 
 * {
@@ -22,19 +28,35 @@
 }
 
 *::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(148, 163, 184, 0.6), rgba(96, 165, 250, 0.42));
+  background: linear-gradient(
+    180deg,
+    rgba(148, 163, 184, 0.6),
+    rgba(96, 165, 250, 0.42)
+  );
   border: 2px solid rgba(15, 23, 42, 0.72);
   border-radius: 999px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, rgba(203, 213, 225, 0.72), rgba(125, 211, 252, 0.52));
+  background: linear-gradient(
+    180deg,
+    rgba(203, 213, 225, 0.72),
+    rgba(125, 211, 252, 0.52)
+  );
 }
 
 body {
   background:
-    radial-gradient(circle at 15% 10%, rgba(36, 87, 245, 0.3), transparent 32rem),
-    radial-gradient(circle at 85% 0%, rgba(112, 66, 255, 0.28), transparent 30rem),
+    radial-gradient(
+      circle at 15% 10%,
+      rgba(36, 87, 245, 0.3),
+      transparent 32rem
+    ),
+    radial-gradient(
+      circle at 85% 0%,
+      rgba(112, 66, 255, 0.28),
+      transparent 30rem
+    ),
     linear-gradient(180deg, #070b18 0%, #0d1224 48%, #090d18 100%);
   margin: 0;
   min-height: 100vh;
@@ -45,7 +67,7 @@ body::before {
     linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
   background-size: 44px 44px;
-  content: "";
+  content: '';
   inset: 0;
   mask-image: linear-gradient(to bottom, black, transparent 78%);
   pointer-events: none;
@@ -116,7 +138,11 @@ p {
   backdrop-filter: blur(18px);
   background:
     linear-gradient(135deg, rgba(12, 18, 35, 0.98), rgba(25, 55, 139, 0.96)),
-    radial-gradient(circle at top left, rgba(124, 58, 237, 0.52), transparent 24rem);
+    radial-gradient(
+      circle at top left,
+      rgba(124, 58, 237, 0.52),
+      transparent 24rem
+    );
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 1.5rem;
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
@@ -124,9 +150,9 @@ p {
   display: grid;
   gap: 0.35rem 0.8rem;
   grid-template-areas:
-    ". brand week"
-    ". status week"
-    "tabs tabs tabs";
+    '. brand week'
+    '. status week'
+    'tabs tabs tabs';
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   margin-bottom: 0.85rem;
   padding: 0.72rem 0.55rem 0.5rem;
@@ -162,7 +188,11 @@ p {
 }
 
 .league-tab.active {
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.95), rgba(36, 87, 245, 0.95));
+  background: linear-gradient(
+    135deg,
+    rgba(124, 58, 237, 0.95),
+    rgba(36, 87, 245, 0.95)
+  );
   box-shadow: 0 0 28px rgba(36, 87, 245, 0.35);
   color: white;
 }
@@ -174,7 +204,7 @@ p {
 }
 
 .brand-block h1 {
-  font-family: Impact, "Arial Black", "Roboto Condensed", system-ui, sans-serif;
+  font-family: Impact, 'Arial Black', 'Roboto Condensed', system-ui, sans-serif;
   font-size: 2.2rem;
   letter-spacing: 0.08em;
   line-height: 1;
@@ -242,8 +272,16 @@ p {
 .panel {
   backdrop-filter: blur(18px);
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.055)),
-    radial-gradient(circle at top left, rgba(36, 87, 245, 0.16), transparent 22rem);
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.1),
+      rgba(255, 255, 255, 0.055)
+    ),
+    radial-gradient(
+      circle at top left,
+      rgba(36, 87, 245, 0.16),
+      transparent 22rem
+    );
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 1.4rem;
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
@@ -255,9 +293,14 @@ p {
 
 .panel::before,
 .league-dashboard::before {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.28), transparent 36%, rgba(99, 102, 241, 0.18));
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.28),
+    transparent 36%,
+    rgba(99, 102, 241, 0.18)
+  );
   border-radius: inherit;
-  content: "";
+  content: '';
   inset: 0;
   mask:
     linear-gradient(#000 0 0) content-box,
@@ -270,7 +313,11 @@ p {
 
 .league-dashboard {
   background:
-    radial-gradient(circle at 30% 0%, rgba(124, 58, 237, 0.18), transparent 24rem),
+    radial-gradient(
+      circle at 30% 0%,
+      rgba(124, 58, 237, 0.18),
+      transparent 24rem
+    ),
     rgba(255, 255, 255, 0.045);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 1.8rem;
@@ -285,7 +332,12 @@ p {
 .module-trim-toggle {
   align-items: center;
   background:
-    linear-gradient(90deg, rgba(96, 165, 250, 0.08), rgba(124, 58, 237, 0.1), rgba(3, 7, 18, 0.02)),
+    linear-gradient(
+      90deg,
+      rgba(96, 165, 250, 0.08),
+      rgba(124, 58, 237, 0.1),
+      rgba(3, 7, 18, 0.02)
+    ),
     linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent);
   border: 0;
   border-radius: 1.4rem 1.4rem 0 0;
@@ -303,9 +355,14 @@ p {
 }
 
 .module-trim-toggle::after {
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
   bottom: 0;
-  content: "";
+  content: '';
   height: 1px;
   left: 1rem;
   opacity: 0.24;
@@ -377,10 +434,10 @@ code {
 
   .top-bar {
     grid-template-areas:
-      "brand"
-      "tabs"
-      "status"
-      "week";
+      'brand'
+      'tabs'
+      'status'
+      'week';
     position: static;
   }
 
@@ -392,5 +449,4 @@ code {
     flex: 0 0 auto;
     max-width: 80vw;
   }
-
 }

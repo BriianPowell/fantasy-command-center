@@ -1,7 +1,7 @@
-import type { PlayerNote, Projection, Ranking } from "../domain/types";
+import type { PlayerNote, Projection, Ranking } from '../domain/types'
 
-export const defaultRankings: Ranking[] = [];
+export const defaultRankings: Ranking[] = []
 
-export const defaultProjections: Projection[] = [];
+export const defaultProjections: Projection[] = []
 
-export const defaultPlayerNotes: PlayerNote[] = [];
+export const defaultPlayerNotes: PlayerNote[] = []

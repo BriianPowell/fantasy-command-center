@@ -1,4 +1,17 @@
 import type {
+  SleeperDraft,
+  SleeperLeague,
+  SleeperMatchup,
+  SleeperNflState,
+  SleeperPick,
+  SleeperPlayer,
+  SleeperRoster,
+  SleeperTradedPick,
+  SleeperTransaction,
+  SleeperTrendingPlayer,
+  SleeperUser,
+} from './sleeperTypes'
+import type {
   DraftPick,
   DraftState,
   FantasyTeam,
@@ -11,69 +24,84 @@ import type {
   Position,
   Roster,
   TradedDraftPick,
-  TrendingPlayer
-} from "../../domain/types";
-import type {
-  SleeperDraft,
-  SleeperLeague,
-  SleeperMatchup,
-  SleeperNflState,
-  SleeperPick,
-  SleeperPlayer,
-  SleeperRoster,
-  SleeperTradedPick,
-  SleeperTransaction,
-  SleeperTrendingPlayer,
-  SleeperUser
-} from "./sleeperTypes";
+  TrendingPlayer,
+} from '../../domain/types'
 
-const SUPPORTED_POSITIONS = new Set(["QB", "RB", "WR", "TE", "K", "DEF", "DB", "DL", "LB", "IDP"]);
+const SUPPORTED_POSITIONS = new Set([
+  'QB',
+  'RB',
+  'WR',
+  'TE',
+  'K',
+  'DEF',
+  'DB',
+  'DL',
+  'LB',
+  'IDP',
+])
 
 export function normalizeLeague(league: SleeperLeague): League {
   return {
     id: league.league_id,
-    provider: "sleeper",
+    provider: 'sleeper',
     name: league.name,
     season: league.season,
     draftId: league.draft_id,
-    settings: normalizeSettings(league)
-  };
+    settings: normalizeSettings(league),
+  }
 }
 
-export function normalizeTeams(users: SleeperUser[], rosters: SleeperRoster[]): FantasyTeam[] {
-  const usersById = new Map(users.map((user) => [user.user_id, user]));
+export function normalizeTeams(
+  users: SleeperUser[],
+  rosters: SleeperRoster[]
+): FantasyTeam[] {
+  const usersById = new Map(users.map((user) => [user.user_id, user]))
 
   return rosters.map((roster) => {
-    const user = roster.owner_id ? usersById.get(roster.owner_id) : undefined;
+    const user = roster.owner_id ? usersById.get(roster.owner_id) : undefined
 
     return {
       id: String(roster.roster_id),
-      name: user?.metadata?.team_name ?? user?.display_name ?? `Team ${roster.roster_id}`,
-      ownerName: user?.display_name ?? user?.username ?? "Unknown owner",
+      name:
+        user?.metadata?.team_name ??
+        user?.display_name ??
+        `Team ${roster.roster_id}`,
+      ownerName: user?.display_name ?? user?.username ?? 'Unknown owner',
       ownerUsername: user?.username,
       ownerId: user?.user_id,
-      avatarUrl: user?.avatar ? `https://sleepercdn.com/avatars/${user.avatar}` : undefined
-    };
-  });
+      avatarUrl: user?.avatar
+        ? `https://sleepercdn.com/avatars/${user.avatar}`
+        : undefined,
+    }
+  })
 }
 
 export function normalizeRoster(roster: SleeperRoster): Roster {
   return {
     teamId: String(roster.roster_id),
     playerIds: roster.players ?? [],
-    starters: roster.starters ?? []
-  };
+    starters: roster.starters ?? [],
+  }
 }
 
-export function normalizeDraft(draft: SleeperDraft, picks: SleeperPick[]): DraftState {
+export function normalizeDraft(
+  draft: SleeperDraft,
+  picks: SleeperPick[]
+): DraftState {
   return {
     id: draft.draft_id,
-    type: draft.type === "auction" ? "auction" : draft.type === "linear" ? "linear" : "snake",
+    type:
+      draft.type === 'auction'
+        ? 'auction'
+        : draft.type === 'linear'
+          ? 'linear'
+          : 'snake',
     status: normalizeDraftStatus(draft.status),
-    rounds: draft.settings?.rounds ?? Math.max(...picks.map((pick) => pick.round), 0),
+    rounds:
+      draft.settings?.rounds ?? Math.max(...picks.map((pick) => pick.round), 0),
     currentPick: picks.length + 1,
-    picks: picks.map(normalizePick)
-  };
+    picks: picks.map(normalizePick),
+  }
 }
 
 export function normalizeNflState(state: SleeperNflState): NflState {
@@ -84,8 +112,8 @@ export function normalizeNflState(state: SleeperNflState): NflState {
     seasonType: state.season_type,
     leagueSeason: state.league_season,
     previousSeason: state.previous_season,
-    leg: state.leg
-  };
+    leg: state.leg,
+  }
 }
 
 export function normalizeMatchup(matchup: SleeperMatchup): LeagueMatchup {
@@ -96,15 +124,17 @@ export function normalizeMatchup(matchup: SleeperMatchup): LeagueMatchup {
     playerIds: matchup.players ?? [],
     starters: matchup.starters ?? [],
     playerPoints: matchup.players_points ?? {},
-    starterPoints: matchup.starters_points ?? []
-  };
+    starterPoints: matchup.starters_points ?? [],
+  }
 }
 
-export function normalizeTransaction(transaction: SleeperTransaction): LeagueTransaction {
+export function normalizeTransaction(
+  transaction: SleeperTransaction
+): LeagueTransaction {
   return {
     id: transaction.transaction_id,
-    type: transaction.type ?? "unknown",
-    status: transaction.status ?? "unknown",
+    type: transaction.type ?? 'unknown',
+    status: transaction.status ?? 'unknown',
     rosterIds: (transaction.roster_ids ?? []).map(String),
     adds: stringifyRosterMap(transaction.adds),
     drops: stringifyRosterMap(transaction.drops),
@@ -112,10 +142,10 @@ export function normalizeTransaction(transaction: SleeperTransaction): LeagueTra
       transaction.waiver_budget?.map((budget) => ({
         sender: String(budget.sender),
         receiver: String(budget.receiver),
-        amount: budget.amount
+        amount: budget.amount,
       })) ?? [],
-    draftPicks: transaction.draft_picks?.map(normalizeTradedPick) ?? []
-  };
+    draftPicks: transaction.draft_picks?.map(normalizeTradedPick) ?? [],
+  }
 }
 
 export function normalizeTradedPick(pick: SleeperTradedPick): TradedDraftPick {
@@ -124,31 +154,45 @@ export function normalizeTradedPick(pick: SleeperTradedPick): TradedDraftPick {
     round: pick.round,
     rosterId: String(pick.roster_id),
     ownerId: pick.owner_id ? String(pick.owner_id) : undefined,
-    previousOwnerId: pick.previous_owner_id ? String(pick.previous_owner_id) : undefined
-  };
+    previousOwnerId: pick.previous_owner_id
+      ? String(pick.previous_owner_id)
+      : undefined,
+  }
 }
 
-export function normalizeTrendingPlayer(player: SleeperTrendingPlayer, type: TrendingPlayer["type"]): TrendingPlayer {
+export function normalizeTrendingPlayer(
+  player: SleeperTrendingPlayer,
+  type: TrendingPlayer['type']
+): TrendingPlayer {
   return {
     playerId: player.player_id,
     type,
-    count: player.count
-  };
+    count: player.count,
+  }
 }
 
 export function normalizePlayer(player: SleeperPlayer): Player | undefined {
-  const positions = (player.fantasy_positions?.length ? player.fantasy_positions : [player.position])
+  const positions = (
+    player.fantasy_positions?.length
+      ? player.fantasy_positions
+      : [player.position]
+  )
     .map(normalizePosition)
-    .filter((position): position is Position => Boolean(position));
+    .filter((position): position is Position => Boolean(position))
 
-  if (!positions.length || !positions.some((position) => SUPPORTED_POSITIONS.has(position))) {
-    return undefined;
+  if (
+    !positions.length ||
+    !positions.some((position) => SUPPORTED_POSITIONS.has(position))
+  ) {
+    return undefined
   }
 
-  const fullName = player.full_name ?? [player.first_name, player.last_name].filter(Boolean).join(" ");
+  const fullName =
+    player.full_name ??
+    [player.first_name, player.last_name].filter(Boolean).join(' ')
 
   if (!fullName) {
-    return undefined;
+    return undefined
   }
 
   return {
@@ -163,20 +207,29 @@ export function normalizePlayer(player: SleeperPlayer): Player | undefined {
     yearsExperience: player.years_exp,
     injuryStatus: player.injury_status,
     byeWeek: player.bye_week,
-    searchRank: player.search_rank
-  };
+    searchRank: player.search_rank,
+  }
 }
 
 function normalizeSettings(league: SleeperLeague): LeagueSettings {
-  const rosterSlots = (league.roster_positions ?? []).reduce<LeagueSettings["rosterSlots"]>(
+  const rosterSlots = (league.roster_positions ?? []).reduce<
+    LeagueSettings['rosterSlots']
+  >(
     (slots, slot) => {
-      const normalizedSlot = slot === "SUPER_FLEX" ? "SUPER_FLEX" : slot === "FLEX" ? "FLEX" : slot === "BN" ? "BN" : slot;
+      const normalizedSlot =
+        slot === 'SUPER_FLEX'
+          ? 'SUPER_FLEX'
+          : slot === 'FLEX'
+            ? 'FLEX'
+            : slot === 'BN'
+              ? 'BN'
+              : slot
 
       if (isRosterSlot(normalizedSlot)) {
-        slots[normalizedSlot] = (slots[normalizedSlot] ?? 0) + 1;
+        slots[normalizedSlot] = (slots[normalizedSlot] ?? 0) + 1
       }
 
-      return slots;
+      return slots
     },
     {
       QB: 0,
@@ -191,16 +244,16 @@ function normalizeSettings(league: SleeperLeague): LeagueSettings {
       IDP: 0,
       FLEX: 0,
       SUPER_FLEX: 0,
-      BN: 0
+      BN: 0,
     }
-  );
+  )
 
   return {
     teams: league.total_rosters,
     scoringType: inferScoringType(league.scoring_settings),
     rosterSlots,
-    playoffWeekStart: league.settings?.playoff_week_start
-  };
+    playoffWeekStart: league.settings?.playoff_week_start,
+  }
 }
 
 function normalizePick(pick: SleeperPick): DraftPick {
@@ -215,52 +268,83 @@ function normalizePick(pick: SleeperPick): DraftPick {
           firstName: pick.metadata.first_name,
           lastName: pick.metadata.last_name,
           position: normalizePosition(pick.metadata.position),
-          team: pick.metadata.team
+          team: pick.metadata.team,
         }
-      : undefined
-  };
+      : undefined,
+  }
 }
 
 function normalizePosition(position?: string): Position | undefined {
   if (!position) {
-    return undefined;
+    return undefined
   }
 
-  const normalized = position === "DST" ? "DEF" : position;
+  const normalized = position === 'DST' ? 'DEF' : position
 
-  return SUPPORTED_POSITIONS.has(normalized) ? (normalized as Position) : undefined;
+  return SUPPORTED_POSITIONS.has(normalized)
+    ? (normalized as Position)
+    : undefined
 }
 
-function normalizeDraftStatus(status?: string): DraftState["status"] {
-  if (status === "pre_draft" || status === "drafting" || status === "complete") {
-    return status;
+function normalizeDraftStatus(status?: string): DraftState['status'] {
+  if (
+    status === 'pre_draft' ||
+    status === 'drafting' ||
+    status === 'complete'
+  ) {
+    return status
   }
 
-  return "unknown";
+  return 'unknown'
 }
 
-function inferScoringType(scoringSettings: Record<string, number> | undefined): LeagueSettings["scoringType"] {
-  const receptionPoints = scoringSettings?.rec ?? 0;
+function inferScoringType(
+  scoringSettings: Record<string, number> | undefined
+): LeagueSettings['scoringType'] {
+  const receptionPoints = scoringSettings?.rec ?? 0
 
   if (receptionPoints === 1) {
-    return "ppr";
+    return 'ppr'
   }
 
   if (receptionPoints === 0.5) {
-    return "half_ppr";
+    return 'half_ppr'
   }
 
   if (receptionPoints === 0) {
-    return "standard";
+    return 'standard'
   }
 
-  return "custom";
+  return 'custom'
 }
 
-function stringifyRosterMap(rosterMap: Record<string, number> | undefined): Record<string, string> {
-  return Object.fromEntries(Object.entries(rosterMap ?? {}).map(([playerId, rosterId]) => [playerId, String(rosterId)]));
+function stringifyRosterMap(
+  rosterMap: Record<string, number> | undefined
+): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(rosterMap ?? {}).map(([playerId, rosterId]) => [
+      playerId,
+      String(rosterId),
+    ])
+  )
 }
 
-function isRosterSlot(slot: string): slot is keyof LeagueSettings["rosterSlots"] {
-  return ["QB", "RB", "WR", "TE", "K", "DEF", "DB", "DL", "LB", "IDP", "FLEX", "SUPER_FLEX", "BN"].includes(slot);
+function isRosterSlot(
+  slot: string
+): slot is keyof LeagueSettings['rosterSlots'] {
+  return [
+    'QB',
+    'RB',
+    'WR',
+    'TE',
+    'K',
+    'DEF',
+    'DB',
+    'DL',
+    'LB',
+    'IDP',
+    'FLEX',
+    'SUPER_FLEX',
+    'BN',
+  ].includes(slot)
 }
