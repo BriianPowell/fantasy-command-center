@@ -1,0 +1,195 @@
+.team-tracker-panel {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.team-tracker-header {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.team-tracker-header h2 {
+  font-size: 1.45rem;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.25rem;
+}
+
+.team-tracker-header p {
+  color: #9aa8c7;
+  font-weight: 700;
+  margin-bottom: 0;
+}
+
+.team-tracker-summary {
+  display: grid;
+  gap: 0.45rem;
+  grid-template-columns: repeat(4, minmax(88px, 1fr));
+}
+
+.team-tracker-metric {
+  background: rgba(7, 11, 24, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 0.75rem;
+  display: grid;
+  gap: 0.14rem;
+  padding: 0.48rem 0.58rem;
+}
+
+.team-tracker-metric span {
+  color: #9aa8c7;
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.team-tracker-metric strong {
+  color: #f8fafc;
+  font-size: 0.95rem;
+}
+
+.team-roster-grid {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.team-roster-section {
+  background: rgba(3, 7, 18, 0.36);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
+  min-width: 0;
+  padding: 0.8rem;
+}
+
+.team-roster-section header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.65rem;
+}
+
+.team-roster-section h3 {
+  font-size: 1rem;
+  margin-bottom: 0;
+}
+
+.team-roster-section header span {
+  background: rgba(96, 165, 250, 0.16);
+  border-radius: 999px;
+  color: #bfdbfe;
+  font-size: 0.72rem;
+  font-weight: 900;
+  padding: 0.25rem 0.48rem;
+}
+
+.team-player-list,
+.team-pick-list {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.team-lineup-list {
+  gap: 0.5rem;
+}
+
+.team-lineup-slot {
+  background: rgba(15, 23, 42, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 1rem;
+  min-height: 4.65rem;
+  padding: 0.35rem;
+}
+
+.team-lineup-slot.filled {
+  background:
+    linear-gradient(135deg, rgba(96, 165, 250, 0.08), rgba(124, 58, 237, 0.05)),
+    rgba(15, 23, 42, 0.2);
+}
+
+.team-lineup-slot.empty {
+  border-style: dashed;
+}
+
+.team-lineup-slot .player-reference-tile {
+  height: 100%;
+}
+
+.team-player-row {
+  min-height: 3.9rem;
+}
+
+.team-player-row .player-reference-main {
+  gap: 0.75rem;
+}
+
+.team-player-row .player-reference-leading {
+  align-items: stretch;
+  background: transparent;
+  display: flex;
+  min-height: 2.55rem;
+  min-width: 3.35rem;
+  padding: 0;
+}
+
+.team-player-row .player-reference-avatar {
+  height: 2.35rem;
+  width: 2.35rem;
+}
+
+.team-player-row .player-reference-body > strong {
+  font-size: 1rem;
+}
+
+.team-player-row .player-reference-meta {
+  font-size: 0.74rem;
+}
+
+.team-player-list p,
+.team-pick-list p {
+  color: #9aa8c7;
+  font-weight: 700;
+  margin-bottom: 0;
+}
+
+.team-player-row.draft-addition {
+  border-color: rgba(110, 231, 183, 0.24);
+  box-shadow: inset 3px 0 0 rgba(110, 231, 183, 0.62);
+}
+
+.team-player-row.empty-slot {
+  background: rgba(15, 23, 42, 0.28);
+  border-style: dashed;
+  opacity: 0.7;
+}
+
+.empty-slot-placeholder {
+  min-height: 2rem;
+}
+
+.team-player-row .slot-label-segments {
+  width: 3.35rem;
+}
+
+.team-player-row .slot-label-segments span {
+  align-items: center;
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .team-roster-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .team-tracker-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .team-tracker-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

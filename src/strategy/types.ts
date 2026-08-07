@@ -29,7 +29,7 @@ export interface TeamOpportunityProfile {
   positions: Partial<Record<Position, TeamPositionProfile>>;
 }
 
-export interface PersonalStrategy {
+export interface StrategyDefaults {
   preferTeamPointEngines: boolean;
   preferDepthChartUpside: boolean;
   boostRisingUsage: boolean;
@@ -44,7 +44,7 @@ export interface PersonalStrategy {
 }
 
 export interface StrategyContext {
-  strategy: PersonalStrategy;
+  strategy: StrategyDefaults;
   teamProfiles: Record<string, TeamOpportunityProfile>;
   inferredDepthCharts: Map<string, Map<Position, Player[]>>;
 }

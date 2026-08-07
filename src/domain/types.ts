@@ -1,7 +1,5 @@
 export type Position = "QB" | "RB" | "WR" | "TE" | "K" | "DEF" | "DB" | "DL" | "LB" | "IDP";
 
-export type ProviderId = "sleeper" | "yahoo";
-
 export type DraftType = "snake" | "auction" | "linear";
 
 export type TeamNeed = "critical" | "thin" | "stable" | "surplus";
@@ -15,7 +13,7 @@ export interface LeagueSettings {
 
 export interface League {
   id: string;
-  provider: ProviderId;
+  provider: "sleeper";
   name: string;
   season: string;
   settings: LeagueSettings;
@@ -50,6 +48,55 @@ export interface Roster {
   teamId: string;
   playerIds: string[];
   starters: string[];
+}
+
+export interface NflState {
+  week: number;
+  displayWeek?: number;
+  season: string;
+  seasonType: "pre" | "regular" | "post" | string;
+  leagueSeason?: string;
+  previousSeason?: string;
+  leg?: number;
+}
+
+export interface LeagueMatchup {
+  teamId: string;
+  matchupId?: number;
+  points: number;
+  playerIds: string[];
+  starters: string[];
+  playerPoints: Record<string, number>;
+  starterPoints: number[];
+}
+
+export interface LeagueTransaction {
+  id: string;
+  type: string;
+  status: string;
+  rosterIds: string[];
+  adds: Record<string, string>;
+  drops: Record<string, string>;
+  waiverBudget: {
+    sender: string;
+    receiver: string;
+    amount: number;
+  }[];
+  draftPicks: TradedDraftPick[];
+}
+
+export interface TradedDraftPick {
+  season: string;
+  round: number;
+  rosterId: string;
+  ownerId?: string;
+  previousOwnerId?: string;
+}
+
+export interface TrendingPlayer {
+  playerId: string;
+  type: "add" | "drop";
+  count: number;
 }
 
 export interface DraftPick {

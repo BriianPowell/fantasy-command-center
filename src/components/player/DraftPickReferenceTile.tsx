@@ -1,0 +1,52 @@
+import { getPositionClass } from "../../domain/positionUtils";
+import type { DraftPick, Player } from "../../domain/types";
+import { formatDraftValueScore, scoreDraftPlayerValue } from "../../domain/playerValueUtils";
+import { PlayerReferenceTile } from "./PlayerReferenceTile";
+import { SlotBadge } from "./SlotBadge";
+import { getSleeperPlayerImageUrl } from "./playerAssets";
+
+export type DraftPickReferenceTileTone = "pick" | "roster";
+
+export function DraftPickReferenceTile({
+  density = "default",
+  pick,
+  player,
+  tone = "pick"
+}: {
+  density?: "default" | "compact";
+  pick: DraftPick;
+  player?: Player;
+  tone?: DraftPickReferenceTileTone;
+}) {
+  const position = player?.positions[0] ?? pick.metadata?.position;
+  const valueScore = player ? formatDraftValueScore(scoreDraftPlayerValue(player)) : undefined;
+  const classes = [
+    "draft-pick-reference-tile",
+    tone === "roster" ? `${density === "default" ? "team-player-row " : ""}roster-style` : "",
+    density === "compact" ? "compact-pick" : "",
+    position ? getPositionClass(position) : ""
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const meta = [
+    player?.team ?? pick.metadata?.team ?? "Draft pick",
+    ...(player?.byeWeek ? [`Bye ${player.byeWeek}`] : []),
+    ...(valueScore ? [`Value ${valueScore}`] : [])
+  ];
+
+  return (
+    <PlayerReferenceTile
+      avatarUrl={pick.playerId ? getSleeperPlayerImageUrl(pick.playerId) : undefined}
+      className={classes}
+      leadingLabel={position ? <SlotBadge slotLabel={position} /> : pick.pickNo}
+      meta={meta}
+      playerName={formatPickName(pick, player)}
+      trailingLabel={`#${pick.pickNo}`}
+      variant={density === "compact" ? "compact" : "default"}
+    />
+  );
+}
+
+function formatPickName(pick: DraftPick, player: Player | undefined): string {
+  return [pick.metadata?.firstName, pick.metadata?.lastName].filter(Boolean).join(" ") || player?.fullName || pick.playerId || "Unknown player";
+}

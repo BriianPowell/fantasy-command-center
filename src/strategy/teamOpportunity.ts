@@ -1,20 +1,38 @@
 import type { Player, Position } from "../domain/types";
-import type { PlayerContributionProfile, StrategyContext, StrategyEvaluation, TeamOpportunityProfile } from "./types";
-import type { PersonalStrategy } from "./types";
+import type {
+  PlayerContributionProfile,
+  StrategyContext,
+  StrategyDefaults,
+  StrategyEvaluation,
+  TeamOpportunityProfile
+} from "./types";
 
 const inferredDepthChartCache = new WeakMap<Player[], StrategyContext["inferredDepthCharts"]>();
+const DEFAULT_STRATEGY: StrategyDefaults = {
+  preferTeamPointEngines: true,
+  preferDepthChartUpside: true,
+  boostRisingUsage: true,
+  penalizeBuriedDepthChartPlayers: true,
+  highValuePositionShare: 0.28,
+  weights: {
+    teamPositionValue: 18,
+    depthChart: 8,
+    playerContribution: 14,
+    trend: 5
+  }
+};
+
+const DEFAULT_TEAM_OPPORTUNITY_PROFILES: Record<string, TeamOpportunityProfile> = {};
 
 export function buildStrategyContext({
   players,
-  strategy,
-  teamProfiles
+  teamProfiles = DEFAULT_TEAM_OPPORTUNITY_PROFILES
 }: {
   players: Player[];
-  strategy: PersonalStrategy;
-  teamProfiles: Record<string, TeamOpportunityProfile>;
+  teamProfiles?: Record<string, TeamOpportunityProfile>;
 }): StrategyContext {
   return {
-    strategy,
+    strategy: DEFAULT_STRATEGY,
     teamProfiles,
     inferredDepthCharts: getInferredDepthCharts(players)
   };
@@ -189,7 +207,7 @@ function findPlayerContribution(
   });
 }
 
-function scoreDepthChart(depthChartRank: number, strategy: PersonalStrategy): number {
+function scoreDepthChart(depthChartRank: number, strategy: StrategyDefaults): number {
   if (depthChartRank === 1) {
     return strategy.weights.depthChart;
   }

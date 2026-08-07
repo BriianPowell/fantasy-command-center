@@ -1,6 +1,6 @@
-# Fantasy Football Tooling
+# Fantasy Command Center
 
-A hosted fantasy football dashboard for draft-day decisions and week-by-week roster analysis.
+A hosted fantasy football command center for draft-day decisions, starting with a focused draft helper.
 
 ## Current Features
 
@@ -9,11 +9,9 @@ A hosted fantasy football dashboard for draft-day decisions and week-by-week ros
 - Configured Sleeper usernames so each league focuses on your team.
 - Normalized league, roster, player, and draft models.
 - Module 1: draft pick helper grouped into expandable position sections, with compact player rows plus your picks and latest picks.
-- Module 2: week-by-week player analysis for your selected team.
-- Module 3: free agent pickup recommendations from Sleeper context and strategy scoring.
-- Personal strategy scoring for team point engines, depth charts, player contribution, and rising usage.
+- Sleeper provider coverage for NFL state, matchups, transactions, traded picks, trending players, drafts, rosters, users, leagues, and player metadata.
+- Built-in draft analysis defaults for team point engines, depth charts, player contribution, and rising usage.
 - Aceternity-inspired glass, gradient, glow, and spotlight-style dashboard elements.
-- Yahoo Sports provider path documented for a future OAuth backend.
 
 ## Getting Started
 
@@ -48,15 +46,15 @@ export const fantasyConfig = {
 } as const;
 ```
 
-Configured leagues auto-load when the site opens. The main layout is a dashboard shell with top-bar tabs for each league and a read-only week badge. League, roster, and draft data render first; the larger Sleeper player pool fills in afterward for draft and free agent recommendations. Each selected league dashboard has three main modules: draft helper by position, weekly analysis for your team, and free agent pickup recommendations. When one of the configured usernames owns a team in a league, the dashboard narrows to that team. Free agent pickup recommendations exclude players already rostered in that league and can rank players from strategy fit even when no projection feed is connected.
+Configured leagues auto-load when the site opens. The main layout is a command center shell with top-bar tabs for each league and a read-only week badge. League, roster, and draft data load first; the larger Sleeper player pool fills in afterward for draft recommendations. The Sleeper provider also exposes lazy methods for NFL state, matchups, transactions, traded picks, and trending players as later modules need them. Each selected league dashboard currently focuses on Module 1: the draft helper by position. When one of the configured usernames owns a team in a league, the dashboard narrows to that team.
 
 The week badge is calculated by `src/utils/nflWeek.ts`. Before the configured Week 1 kickoff date, the dashboard starts at week `0`; after kickoff it advances one week every seven days.
 
 ## Module Structure
 
 - `src/modules/draft/DraftPickHelperModule.tsx`: draft pick helper grouped by position with accordion-style sections.
-- `src/modules/weekly/WeeklyTeamAnalysisModule.tsx`: weekly analysis for the selected team roster.
-- `src/modules/free-agents/FreeAgentPickupModule.tsx`: free agent pickup recommendations.
+- `src/modules/weekly/WeeklyTeamAnalysisModule.tsx`: parked weekly analysis module for a later build-out.
+- `src/modules/free-agents/FreeAgentPickupModule.tsx`: parked free-agent recommendations module for a later build-out.
 - `src/components/dashboard/`: shared UI primitives used across modules.
 
 ## UI Direction
@@ -69,24 +67,20 @@ The current UI uses an Aceternity-inspired visual style in plain CSS: glass pane
 - [Fantasy Football Analyzer](https://github.com/Krool/FantasyFootballAnalyzer): static-site-friendly draft and league analysis ideas, including draft grades, points-left-on-board, rankings, and live Sleeper sync.
 - [Draft Assist App](https://github.com/PreferencePopular821/draftassistapp/): simple browser draft board with CSV rankings, recent picks, manual drafted tracking, and tier breaks.
 - [Fantasy Football Manager](https://github.com/kbains09/FantasyManager): VORP-style free agent and trade recommendations that could inspire our pickup scoring.
-- [Fantasy Sports Toolkit](https://github.com/michaelfromyeg/fantasy-sports-toolkit): provider-swappable approach for Sleeper/Yahoo data with reusable lineup and waiver logic.
+- [Fantasy Sports Toolkit](https://github.com/michaelfromyeg/fantasy-sports-toolkit): reusable lineup and waiver logic ideas that can be adapted to Sleeper data.
 
-## Yahoo Support
+## Draft Analysis Defaults
 
-The static app should not store Yahoo OAuth credentials. See `docs/yahoo-backend.md` for the backend contract and frontend adapter path.
+The strategy analysis lives in `src/strategy/teamOpportunity.ts`. It is not shown as a dashboard module; it quietly biases draft scoring so the command center stays focused on decisions.
 
-## Configurable Strategy Bias
-
-The strategy layer lives in `src/config/personalStrategy.ts`. It is not shown as a dashboard module; it quietly biases draft and free agent scoring so the dashboard stays focused on decisions.
-
-Use it to maintain:
+It currently synthesizes:
 
 - Which NFL teams generate fantasy points through each position.
-- Manual depth charts by team and position.
-- Individual player contribution share, opportunity share, red zone share, and usage trend.
-- Your weighting preferences for team point engines, depth chart upside, player contribution, and rising usage.
+- Inferred depth charts by team and position from Sleeper player metadata.
+- Individual player contribution share, opportunity share, red zone share, and usage trend when defaults are added.
+- Built-in weighting preferences for team point engines, depth chart upside, player contribution, and rising usage.
 
-The app also infers a depth chart from Sleeper player metadata when no manual team profile exists. Manual profiles should be added where you have stronger opinions or better data.
+The app infers a depth chart from Sleeper player metadata. Built-in team profiles can be added to `src/strategy/teamOpportunity.ts` where stronger defaults or better data are available.
 
 Example team profile:
 
@@ -108,4 +102,4 @@ DET: {
 }
 ```
 
-Draft recommendations and free agent pickups use this config as a personal bias layer. Tune the weights and team profiles over time as you fine tune the application.
+Draft recommendations use these defaults as a context layer. Tune the built-in profiles over time as the player synthesis gets richer.

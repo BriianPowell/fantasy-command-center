@@ -3,14 +3,24 @@ import type {
   LeagueSettings,
   Player,
   PlayerNote,
+  Position,
   Projection,
   Ranking,
   Roster
 } from "../domain/types";
+import { scoreDraftPlayerValue } from "../domain/playerValueUtils";
 import { evaluatePlayerStrategy } from "../strategy/teamOpportunity";
 import type { StrategyContext } from "../strategy/types";
 
 const FLEX_POSITIONS = new Set(["RB", "WR", "TE"]);
+const DRAFT_CANDIDATE_LIMITS: Partial<Record<Position, number>> = {
+  QB: 50,
+  RB: 120,
+  WR: 150,
+  TE: 70,
+  K: 30,
+  DEF: 30
+};
 
 export interface DraftRecommendationInput {
   players: Player[];
@@ -30,15 +40,15 @@ export function buildDraftRecommendations(input: DraftRecommendationInput): Draf
   const playersById = new Map(input.players.map((player) => [player.id, player]));
   const rosterPositionCounts = input.roster ? countRosterPositions(input.roster, playersById) : new Map<string, number>();
   const rosterByeCounts = input.roster ? countRosterByeWeeks(input.roster, playersById) : new Map<number, number>();
-  const remainingByPosition = countRemainingByPosition(input.players, input.draftedPlayerIds);
+  const draftCandidates = getDraftCandidates(input.players, input.draftedPlayerIds);
+  const remainingByPosition = countRemainingByPosition(draftCandidates, input.draftedPlayerIds);
 
-  return input.players
-    .filter((player) => !input.draftedPlayerIds.has(player.id))
+  return draftCandidates
     .map((player) => {
       const ranking = rankingByPlayer.get(player.id);
       const projection = projectionByPlayer.get(player.id);
       const note = noteByPlayer.get(player.id);
-      const valueScore = scoreValue(ranking, projection);
+      const valueScore = scoreDraftPlayerValue(player, ranking, projection);
       const needScore = scoreNeed(player, rosterPositionCounts, input.roster, input.leagueSettings);
       const scarcityScore = scoreScarcity(player, remainingByPosition);
       const strategyEvaluation = evaluatePlayerStrategy(player, input.strategyContext);
@@ -62,12 +72,26 @@ export function buildDraftRecommendations(input: DraftRecommendationInput): Draf
     .sort((a, b) => b.score - a.score);
 }
 
-function scoreValue(ranking?: Ranking, projection?: Projection): number {
-  const rankScore = ranking ? Math.max(0, 120 - ranking.rank) : 30;
-  const projectionScore = projection ? projection.projectedPoints * 2 : 0;
-  const tierBonus = ranking?.tier ? Math.max(0, 12 - ranking.tier * 2) : 0;
+function getDraftCandidates(players: Player[], draftedPlayerIds: Set<string>): Player[] {
+  const playersByPosition = new Map<Position, Player[]>();
 
-  return rankScore + projectionScore + tierBonus;
+  for (const player of players) {
+    const primaryPosition = player.positions[0];
+
+    if (draftedPlayerIds.has(player.id) || !DRAFT_CANDIDATE_LIMITS[primaryPosition]) {
+      continue;
+    }
+
+    playersByPosition.set(primaryPosition, [...(playersByPosition.get(primaryPosition) ?? []), player]);
+  }
+
+  return Array.from(playersByPosition.entries()).flatMap(([position, positionPlayers]) => {
+    return positionPlayers.sort(compareSleeperSearchRank).slice(0, DRAFT_CANDIDATE_LIMITS[position]);
+  });
+}
+
+function compareSleeperSearchRank(a: Player, b: Player): number {
+  return (a.searchRank ?? Number.MAX_SAFE_INTEGER) - (b.searchRank ?? Number.MAX_SAFE_INTEGER);
 }
 
 function scoreNeed(player: Player, rosterCounts: Map<string, number>, roster: Roster | undefined, settings: LeagueSettings): number {
@@ -186,6 +210,10 @@ function buildRecommendationNotes(
 
   if (ranking?.tier) {
     notes.push(`Tier ${ranking.tier}`);
+  }
+
+  if (!ranking && player.searchRank) {
+    notes.push(`Sleeper search rank ${player.searchRank}`);
   }
 
   if (projection) {

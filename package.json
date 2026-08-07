@@ -1,9 +1,9 @@
 {
-  "name": "fantasy-football-tooling",
+  "name": "fantasy-command-center",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "homepage": "https://briianpowell.github.io/fantasy-football-tooling/",
+  "homepage": "https://briianpowell.github.io/fantasy-command-center/",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
