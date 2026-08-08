@@ -109,7 +109,9 @@ export class SleeperApi {
   }
 
   fetchPlayers(): Promise<Record<string, SleeperPlayer>> {
-    return sleeperFetch<Record<string, SleeperPlayer>>(`/players/${NFL}`)
+    return sleeperFetch<Record<string, SleeperPlayer>>(
+      `/players/${NFL}?active=true`
+    )
   }
 }
 

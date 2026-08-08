@@ -26,11 +26,13 @@ function makePlayer({
   id,
   position,
   searchRank,
+  team = 'DET',
   yearsExperience,
 }: {
   id: string
   position: Position
   searchRank: number
+  team?: string
   yearsExperience?: number
 }): Player {
   return {
@@ -39,6 +41,7 @@ function makePlayer({
     fullName: id,
     positions: [position],
     searchRank,
+    team,
     yearsExperience,
   }
 }
@@ -118,6 +121,41 @@ describe('buildDraftRecommendations', () => {
     expect(recommendations[0].valueScore).toBeGreaterThan(
       recommendations[1].valueScore
     )
+  })
+
+  it('excludes players without a current NFL team', () => {
+    const rosteredReceiver = makePlayer({
+      id: 'rostered-wr',
+      position: 'WR',
+      searchRank: 10,
+    })
+    const freeAgentReceiver = makePlayer({
+      id: 'free-agent-wr',
+      position: 'WR',
+      searchRank: 1,
+      team: 'FA',
+    })
+    const teamlessReceiver = {
+      ...makePlayer({
+        id: 'teamless-wr',
+        position: 'WR',
+        searchRank: 2,
+      }),
+      team: undefined,
+    }
+
+    const recommendations = buildDraftRecommendations({
+      leagueSettings,
+      notes: [],
+      players: [freeAgentReceiver, teamlessReceiver, rosteredReceiver],
+      projections: [],
+      rankings: [],
+      unavailablePlayerIds: new Set(),
+    })
+
+    expect(
+      recommendations.map((recommendation) => recommendation.player.id)
+    ).toEqual([rosteredReceiver.id])
   })
 
   it('filters veterans out of rookie-only board mode', () => {

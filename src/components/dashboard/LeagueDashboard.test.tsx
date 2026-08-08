@@ -57,6 +57,7 @@ function buildLeagueData(
         positions: ['RB'],
         providerPlayerId: 'starter-player',
         searchRank: 5,
+        team: 'DET',
         yearsExperience: 3,
       },
       {
@@ -65,6 +66,7 @@ function buildLeagueData(
         positions: ['WR'],
         providerPlayerId: 'drafted-rookie',
         searchRank: 20,
+        team: 'KC',
         yearsExperience: 0,
       },
       {
@@ -73,6 +75,7 @@ function buildLeagueData(
         positions: ['RB'],
         providerPlayerId: 'available-rookie',
         searchRank: 30,
+        team: 'ATL',
         yearsExperience: 0,
       },
       {
@@ -81,6 +84,7 @@ function buildLeagueData(
         positions: ['RB'],
         providerPlayerId: 'veteran-target',
         searchRank: 1,
+        team: 'BAL',
         yearsExperience: 5,
       },
     ],

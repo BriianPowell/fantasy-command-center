@@ -1,18 +1,24 @@
 import { describe, expect, it } from 'vitest'
 import type { TeamTrackerPlayer } from './teamTrackerModel'
 import {
+  buildPositionValueGaps,
+  buildTeamPickValueImpacts,
   buildTeamValueSnapshot,
   formatTeamValue,
   formatTeamValueDelta,
 } from './teamValueModel'
-import type { Player } from '../../domain/types'
+import type { Player, Position } from '../../domain/types'
 
-function makePlayer(id: string, searchRank: number): Player {
+function makePlayer(
+  id: string,
+  searchRank: number,
+  position: Position = 'RB'
+): Player {
   return {
     id,
     providerPlayerId: id,
     fullName: id,
-    positions: ['RB'],
+    positions: [position],
     searchRank,
   }
 }
@@ -22,7 +28,7 @@ function makeTrackedPlayer(player: Player): TeamTrackerPlayer {
     id: player.id,
     isDraftAddition: false,
     player,
-    primaryPosition: 'RB',
+    primaryPosition: player.positions[0] ?? 'RB',
   }
 }
 
@@ -58,8 +64,101 @@ describe('buildTeamValueSnapshot', () => {
     expect(snapshot.totalValue).toBe(130)
     expect(snapshot.draftedAdditionsValue).toBe(69)
     expect(snapshot.averageValue).toBe(65)
+    expect(snapshot.starterBenchDelta).toBe(24)
     expect(snapshot.latestPickValue).toBe(53)
     expect(snapshot.latestPickDelta).toBe(-12)
+  })
+})
+
+describe('buildTeamPickValueImpacts', () => {
+  it('calculates each pick impact against the team baseline value', () => {
+    const highValuePick = makePlayer('high-value-pick', 1)
+    const lowValuePick = makePlayer('low-value-pick', 15, 'WR')
+
+    const impacts = buildTeamPickValueImpacts({
+      baselineValue: 65,
+      picks: [
+        {
+          pickNo: 1,
+          playerId: highValuePick.id,
+          rosterId: 'team-1',
+          round: 1,
+        },
+        {
+          pickNo: 2,
+          playerId: lowValuePick.id,
+          rosterId: 'team-1',
+          round: 1,
+        },
+      ],
+      players: [highValuePick, lowValuePick],
+      weakPositions: new Set(['RB']),
+    })
+
+    expect(impacts.get(1)?.valueDelta).toBe(12)
+    expect(impacts.get(1)?.cumulativeDraftValue).toBe(77)
+    expect(impacts.get(1)?.improvesWeakArea).toBe(true)
+    expect(impacts.get(2)?.valueDelta).toBe(-12)
+    expect(impacts.get(2)?.cumulativeDraftValue).toBe(130)
+    expect(impacts.get(2)?.improvesWeakArea).toBe(false)
+  })
+
+  it('skips picks without matching player metadata', () => {
+    const impacts = buildTeamPickValueImpacts({
+      baselineValue: 65,
+      picks: [
+        {
+          pickNo: 1,
+          playerId: 'missing-player',
+          rosterId: 'team-1',
+          round: 1,
+        },
+      ],
+      players: [],
+    })
+
+    expect(impacts.size).toBe(0)
+  })
+})
+
+describe('buildPositionValueGaps', () => {
+  it('summarizes starter fill and position value against roster average', () => {
+    const runningBack = makePlayer('running-back', 1, 'RB')
+    const wideReceiver = makePlayer('wide-receiver', 15, 'WR')
+
+    const gaps = buildPositionValueGaps({
+      bench: [makeTrackedPlayer(wideReceiver)],
+      lineupSlots: [
+        {
+          id: 'RB-1',
+          player: makeTrackedPlayer(runningBack),
+          slot: 'RB',
+        },
+        {
+          id: 'WR-1',
+          slot: 'WR',
+        },
+      ],
+    })
+
+    expect(gaps).toEqual([
+      {
+        averageValue: 77,
+        filledStarters: 1,
+        playerCount: 1,
+        position: 'RB',
+        requiredStarters: 1,
+        valueDelta: 12,
+      },
+      {
+        averageValue: 53,
+        filledStarters: 0,
+        playerCount: 1,
+        position: 'WR',
+        requiredStarters: 1,
+        valueDelta: -12,
+      },
+    ])
   })
 })
 

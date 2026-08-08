@@ -26,7 +26,7 @@
 .team-tracker-summary {
   display: grid;
   gap: 0.45rem;
-  grid-template-columns: repeat(6, minmax(76px, 1fr));
+  grid-template-columns: repeat(7, minmax(76px, 1fr));
 }
 
 .team-tracker-metric {
@@ -54,7 +54,7 @@
 .team-roster-grid {
   display: grid;
   gap: 0.8rem;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
 }
 
 .team-roster-section {
@@ -87,7 +87,8 @@
 }
 
 .team-player-list,
-.team-pick-list {
+.team-pick-list,
+.position-gap-list {
   display: grid;
   gap: 0.45rem;
 }
@@ -153,6 +154,33 @@
   color: var(--text-muted);
   font-weight: 700;
   margin-bottom: 0;
+}
+
+.position-gap-row {
+  align-items: center;
+  background: rgba(15, 23, 42, 0.28);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.85rem;
+  display: grid;
+  gap: 0.25rem;
+  grid-template-columns: 2.5rem 1fr;
+  padding: 0.55rem 0.65rem;
+}
+
+.position-gap-row.needs-attention {
+  border-color: rgba(251, 191, 36, 0.28);
+  box-shadow: inset 3px 0 0 rgba(251, 191, 36, 0.62);
+}
+
+.position-gap-row strong {
+  color: #f8fafc;
+  grid-row: span 3;
+}
+
+.position-gap-row span {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
 }
 
 .team-player-row.draft-addition {

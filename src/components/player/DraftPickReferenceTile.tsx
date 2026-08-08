@@ -14,12 +14,18 @@ import type { DraftPick, Player } from '../../domain/types'
 export type DraftPickReferenceTileTone = 'pick' | 'roster'
 
 export function DraftPickReferenceTile({
+  cumulativeValue,
   density = 'default',
+  impactValue,
+  improvesWeakArea,
   pick,
   player,
   tone = 'pick',
 }: {
+  cumulativeValue?: number
   density?: 'default' | 'compact'
+  impactValue?: number
+  improvesWeakArea?: boolean
   pick: DraftPick
   player?: Player
   tone?: DraftPickReferenceTileTone
@@ -43,6 +49,13 @@ export function DraftPickReferenceTile({
     player?.team ?? pick.metadata?.team ?? 'Draft pick',
     ...(player?.byeWeek ? [`Bye ${player.byeWeek}`] : []),
     ...(valueScore ? [`Value ${valueScore}`] : []),
+    ...(impactValue === undefined
+      ? []
+      : [`Impact ${formatDraftValueScore(impactValue)}`]),
+    ...(cumulativeValue === undefined
+      ? []
+      : [`Draft total ${formatDraftValueScore(cumulativeValue)}`]),
+    ...(improvesWeakArea ? ['Weak spot'] : []),
   ]
 
   return (

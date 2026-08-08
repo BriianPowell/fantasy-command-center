@@ -93,11 +93,17 @@ describe('TeamTrackerModule', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('Team value')).toBeInTheDocument()
     expect(screen.getByText('Starter value')).toBeInTheDocument()
+    expect(screen.getByText('Starter edge')).toBeInTheDocument()
     expect(
       screen.getByRole('heading', { name: 'Starters' })
     ).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Bench' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Position Gaps' })
+    ).toBeInTheDocument()
     expect(screen.getByText('Starter Player')).toBeInTheDocument()
     expect(screen.getAllByText('Drafted Player').length).toBeGreaterThan(0)
+    expect(screen.getByText(/Impact/)).toBeInTheDocument()
+    expect(screen.getByText(/Draft total/)).toBeInTheDocument()
   })
 })

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { formatByeWeek, formatComponentScore } from './draftFormatting'
+import { formatComponentScore } from './draftFormatting'
 import { RecommendationDetails } from './RecommendationDetails'
 import { getSleeperPlayerImageUrl } from '../../components/player/playerAssets'
 import { PlayerReferenceTile } from '../../components/player/PlayerReferenceTile'
@@ -101,7 +101,7 @@ export function DraftPlayerTile({
       leadingLabel={rank}
       meta={[
         player.team ?? 'FA',
-        `Bye ${formatByeWeek(player.byeWeek)}`,
+        ...(player.byeWeek ? [`Bye ${player.byeWeek}`] : []),
         recommendation.suggestion,
         `Value ${formatComponentScore(recommendation.valueScore)}`,
       ]}

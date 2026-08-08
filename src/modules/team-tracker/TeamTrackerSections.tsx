@@ -2,6 +2,7 @@ import type {
   TeamTrackerLineupSlot,
   TeamTrackerPlayer,
 } from './teamTrackerModel'
+import type { PositionValueGap, TeamPickValueImpact } from './teamValueModel'
 import { DraftPickReferenceTile } from '../../components/player/DraftPickReferenceTile'
 import { getSleeperPlayerImageUrl } from '../../components/player/playerAssets'
 import { PlayerReferenceTile } from '../../components/player/PlayerReferenceTile'
@@ -89,10 +90,46 @@ export function RosterSection({
   )
 }
 
+export function PositionValueGapsSection({
+  gaps,
+}: {
+  gaps: PositionValueGap[]
+}) {
+  return (
+    <section className="team-roster-section">
+      <header>
+        <h3>Position Gaps</h3>
+        <span>{gaps.length}</span>
+      </header>
+      <div className="position-gap-list">
+        {gaps.map((gap) => (
+          <div
+            className={
+              gap.filledStarters < gap.requiredStarters
+                ? 'position-gap-row needs-attention'
+                : 'position-gap-row'
+            }
+            key={gap.position}
+          >
+            <strong>{gap.position}</strong>
+            <span>
+              {gap.filledStarters}/{gap.requiredStarters} starters
+            </span>
+            <span>Avg {formatDraftValueScore(gap.averageValue)}</span>
+            <span>Gap {formatDraftValueScore(gap.valueDelta)}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 export function RecentTeamPicksSection({
+  pickValueImpacts,
   picks,
   players,
 }: {
+  pickValueImpacts?: Map<number, TeamPickValueImpact>
   picks: DraftPick[]
   players: Player[]
 }) {
@@ -108,6 +145,13 @@ export function RecentTeamPicksSection({
         {picks.length ? (
           picks.map((pick) => (
             <DraftPickReferenceTile
+              cumulativeValue={
+                pickValueImpacts?.get(pick.pickNo)?.cumulativeDraftValue
+              }
+              impactValue={pickValueImpacts?.get(pick.pickNo)?.valueDelta}
+              improvesWeakArea={
+                pickValueImpacts?.get(pick.pickNo)?.improvesWeakArea
+              }
               key={pick.pickNo}
               pick={pick}
               player={
@@ -157,7 +201,7 @@ function TeamPlayerRow({
       }
       meta={[
         player.player.team ?? 'FA',
-        `Bye ${player.player.byeWeek ?? 'TBD'}`,
+        ...(player.player.byeWeek ? [`Bye ${player.player.byeWeek}`] : []),
         `Value ${valueScore}`,
         ...(player.isDraftAddition ? ['Draft addition'] : []),
       ]}

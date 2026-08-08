@@ -169,6 +169,7 @@ function getDraftCandidates(
 
     if (
       unavailablePlayerIds.has(player.id) ||
+      !isPlayerOnNflTeam(player) ||
       !shouldIncludePlayerInDraftBoard(player, boardMode) ||
       !isPositionConfiguredForLeague(primaryPosition, leagueSettings) ||
       !DRAFT_CANDIDATE_LIMITS[primaryPosition]
@@ -189,6 +190,10 @@ function getDraftCandidates(
         .slice(0, DRAFT_CANDIDATE_LIMITS[position])
     }
   )
+}
+
+function isPlayerOnNflTeam(player: Player): boolean {
+  return Boolean(player.team && player.team !== 'FA')
 }
 
 function getRosterFit(

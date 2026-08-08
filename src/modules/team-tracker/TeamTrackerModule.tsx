@@ -1,11 +1,14 @@
 import { buildTeamTrackerViewModel } from './teamTrackerModel'
 import {
   LineupSection,
+  PositionValueGapsSection,
   RecentTeamPicksSection,
   RosterSection,
   TrackerMetric,
 } from './TeamTrackerSections'
 import {
+  buildPositionValueGaps,
+  buildTeamPickValueImpacts,
   buildTeamValueSnapshot,
   formatTeamValue,
   formatTeamValueDelta,
@@ -50,6 +53,23 @@ export function TeamTrackerModule({
     picks: teamPicks,
     players: data.players,
   })
+  const positionValueGaps = buildPositionValueGaps({
+    bench: tracker.bench,
+    lineupSlots: tracker.lineupSlots,
+  })
+  const weakPositions = new Set(
+    positionValueGaps.flatMap((gap) =>
+      gap.filledStarters < gap.requiredStarters || gap.valueDelta < 0
+        ? [gap.position]
+        : []
+    )
+  )
+  const pickValueImpacts = buildTeamPickValueImpacts({
+    baselineValue: teamValue.averageValue,
+    picks: teamPicks,
+    players: data.players,
+    weakPositions,
+  })
 
   return (
     <section
@@ -87,6 +107,10 @@ export function TeamTrackerModule({
             value={formatTeamValue(teamValue.benchValue)}
           />
           <TrackerMetric
+            label="Starter edge"
+            value={formatTeamValueDelta(teamValue.starterBenchDelta)}
+          />
+          <TrackerMetric
             label="Draft value"
             value={formatTeamValue(teamValue.draftedAdditionsValue)}
           />
@@ -105,7 +129,12 @@ export function TeamTrackerModule({
             players={tracker.bench}
             title="Bench"
           />
-          <RecentTeamPicksSection picks={teamPicks} players={data.players} />
+          <PositionValueGapsSection gaps={positionValueGaps} />
+          <RecentTeamPicksSection
+            pickValueImpacts={pickValueImpacts}
+            picks={teamPicks}
+            players={data.players}
+          />
         </div>
       ) : null}
     </section>
