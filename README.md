@@ -33,6 +33,15 @@ npm run build
 
 Deployments are handled by `.github/workflows/deploy-pages.yml` when changes land on `main`. In the repository settings, configure GitHub Pages to use **GitHub Actions** as the source.
 
+## Release Checklist
+
+Before merging changes to `main`:
+
+- Keep work grouped by GitHub issue when possible.
+- Run `npm install` after dependency changes and review `package-lock.json` for expected churn.
+- Run `npm run lint`, `npm run test`, and `npm run build` locally.
+- Confirm the GitHub Pages workflow passes after the merge.
+
 Manual deploys through the `gh-pages` package are still available:
 
 ```sh
