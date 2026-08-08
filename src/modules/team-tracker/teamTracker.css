@@ -26,7 +26,7 @@
 .team-tracker-summary {
   display: grid;
   gap: 0.45rem;
-  grid-template-columns: repeat(4, minmax(88px, 1fr));
+  grid-template-columns: repeat(6, minmax(76px, 1fr));
 }
 
 .team-tracker-metric {

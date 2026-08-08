@@ -154,7 +154,9 @@ export interface DraftRecommendation {
   scarcityScore: number
   strategyScore: number
   byeRisk: number
+  insight: string
   notes: string[]
+  suggestion: string
 }
 
 export interface NormalizedLeagueData {

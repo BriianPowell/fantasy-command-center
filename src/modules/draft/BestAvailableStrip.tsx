@@ -33,7 +33,7 @@ export function BestAvailableStrip({
               className={`best-available-pill ${primaryPosition ? getPositionClass(primaryPosition) : ''}`}
               key={recommendation.player.id}
               leadingLabel={index + 1}
-              meta={[primaryPosition ?? 'Any']}
+              meta={[primaryPosition ?? 'Any', recommendation.suggestion]}
               playerName={recommendation.player.fullName}
               trailingLabel={recommendation.score}
               variant="compact"

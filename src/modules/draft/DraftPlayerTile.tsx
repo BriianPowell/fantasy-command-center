@@ -64,13 +64,19 @@ export function DraftPlayerTile({
   function openRecommendationDetails() {
     window.clearTimeout(hoverOpenTimer.current)
 
+    if (isTileUnderColumnHeader(tileRef.current)) {
+      setIsWhyOpen(false)
+      return
+    }
+
     const cooldownRemaining = hoverCooldownRef.current - Date.now()
 
     if (cooldownRemaining > 0) {
       hoverOpenTimer.current = window.setTimeout(() => {
         if (
-          tileRef.current?.matches(':hover') ||
-          document.activeElement === tileRef.current
+          !isTileUnderColumnHeader(tileRef.current) &&
+          (tileRef.current?.matches(':hover') ||
+            document.activeElement === tileRef.current)
         ) {
           setIsWhyOpen(true)
         }
@@ -96,6 +102,7 @@ export function DraftPlayerTile({
       meta={[
         player.team ?? 'FA',
         `Bye ${formatByeWeek(player.byeWeek)}`,
+        recommendation.suggestion,
         `Value ${formatComponentScore(recommendation.valueScore)}`,
       ]}
       onBlur={(event) => {
@@ -119,5 +126,22 @@ export function DraftPlayerTile({
         <RecommendationDetails recommendation={recommendation} />
       ) : null}
     </PlayerReferenceTile>
+  )
+}
+
+function isTileUnderColumnHeader(tile: HTMLDivElement | null): boolean {
+  if (!tile) {
+    return false
+  }
+
+  const column = tile.closest('.draft-position-column')
+  const header = column?.querySelector('.draft-position-header')
+
+  if (!header) {
+    return false
+  }
+
+  return (
+    tile.getBoundingClientRect().top < header.getBoundingClientRect().bottom
   )
 }

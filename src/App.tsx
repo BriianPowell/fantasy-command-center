@@ -294,14 +294,15 @@ function LeagueDashboard({
     return buildDraftAwareRoster(baseRoster, data, selectedTeamId)
   }, [baseRoster, data, selectedTeamId])
 
-  const draftedPlayerIds = useMemo(() => {
+  const unavailablePlayerIds = useMemo(() => {
     const draftedFromSleeper =
       data.draft?.picks.flatMap((pick) =>
         pick.playerId ? [pick.playerId] : []
       ) ?? []
+    const rosteredPlayers = data.rosters.flatMap((roster) => roster.playerIds)
 
-    return new Set(draftedFromSleeper)
-  }, [data.draft?.picks])
+    return new Set([...draftedFromSleeper, ...rosteredPlayers])
+  }, [data.draft?.picks, data.rosters])
 
   const strategyContext = useMemo(() => {
     return buildStrategyContext({
@@ -312,7 +313,7 @@ function LeagueDashboard({
   const recommendations = useMemo(() => {
     return buildDraftRecommendations({
       players: data.players,
-      draftedPlayerIds,
+      unavailablePlayerIds,
       roster: selectedRoster,
       leagueSettings: data.league.settings,
       rankings: defaultRankings,
@@ -323,9 +324,9 @@ function LeagueDashboard({
   }, [
     data.league.settings,
     data.players,
-    draftedPlayerIds,
     selectedRoster,
     strategyContext,
+    unavailablePlayerIds,
   ])
 
   return (

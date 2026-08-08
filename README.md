@@ -12,7 +12,7 @@ A hosted fantasy football command center for Sleeper draft-day decisions, center
 - Sleeper-style Draft Room module with position columns, shared player tiles, top targets, and latest picks.
 - Sleeper provider coverage for NFL state, matchups, transactions, traded picks, trending players, drafts, rosters, users, leagues, and player metadata.
 - Built-in draft analysis defaults for team point engines, depth charts, player contribution, and rising usage.
-- Aceternity-inspired glass, gradient, glow, and spotlight-style dashboard elements.
+- Plain-CSS glass, gradient, glow, and spotlight-style dashboard elements.
 
 ## Getting Started
 
@@ -69,7 +69,7 @@ The week badge prefers Sleeper's `state/nfl` endpoint and falls back to `src/uti
 
 ## UI Direction
 
-The current UI uses an Aceternity-inspired visual style in plain CSS: glass panels, gradient borders, radial glows, dark dashboard surfaces, and hover spotlight cards. A full Aceternity UI migration would add Tailwind CSS plus `motion`, `clsx`, and `tailwind-merge`, then copy selected components into `src/components/ui`.
+The current UI uses plain CSS for glass panels, gradient borders, radial glows, dark dashboard surfaces, and hover spotlight cards.
 
 ## Open Source Inspiration
 

@@ -31,6 +31,9 @@ export function RecommendationDetails({
         <span>Bye risk {formatComponentScore(recommendation.byeRisk)}</span>
       </div>
       <div className="note-list">
+        <span className="recommendation-insight-note">
+          {recommendation.suggestion}: {recommendation.insight}
+        </span>
         {positionContext ? (
           <span className="position-context-note">{positionContext}</span>
         ) : null}

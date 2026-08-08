@@ -239,16 +239,15 @@
 .draft-position-header::after {
   background: linear-gradient(
     180deg,
-    #111827 0%,
-    rgba(17, 24, 39, 0.74) 45%,
+    color-mix(in srgb, var(--position-color) 12%, rgba(17, 24, 39, 0.82)) 0%,
+    rgba(17, 24, 39, 0.34) 58%,
     transparent 100%
   );
-  bottom: -1.6rem;
+  bottom: -0.95rem;
   content: '';
-  cursor: default;
-  height: 1.6rem;
+  height: 0.95rem;
   left: 0;
-  pointer-events: auto;
+  pointer-events: none;
   position: absolute;
   right: 0;
 }
@@ -294,7 +293,7 @@
 .draft-player-stack {
   display: grid;
   gap: 0.55rem;
-  padding: 0.65rem;
+  padding: 0.75rem 0.65rem 0.65rem;
 }
 
 .draft-player-tile {
@@ -390,10 +389,30 @@
   padding: 0.25rem 0.45rem;
 }
 
-.why-popover .note-list .position-context-note {
-  background: rgba(250, 204, 21, 0.12);
-  border: 1px solid rgba(250, 204, 21, 0.22);
+.why-popover .note-list .recommendation-insight-note {
+  background:
+    linear-gradient(135deg, rgba(250, 204, 21, 0.14), rgba(251, 146, 60, 0.08)),
+    rgba(15, 23, 42, 0.42);
+  border: 1px solid rgba(250, 204, 21, 0.24);
+  border-radius: 0.9rem;
   color: #fde68a;
+  flex-basis: 100%;
+  font-size: 0.74rem;
+  line-height: 1.25;
+  padding: 0.55rem 0.65rem;
+}
+
+.why-popover .note-list .position-context-note {
+  background:
+    linear-gradient(135deg, rgba(250, 204, 21, 0.1), rgba(251, 146, 60, 0.06)),
+    rgba(15, 23, 42, 0.34);
+  border: 1px solid rgba(250, 204, 21, 0.22);
+  border-radius: 0.9rem;
+  color: #fde68a;
+  flex-basis: 100%;
+  font-size: 0.72rem;
+  line-height: 1.25;
+  padding: 0.5rem 0.62rem;
 }
 
 .recommendation-breakdown {

@@ -42,7 +42,6 @@ export function DraftPickHelperModule({
   const bestAvailable = [...recommendations]
     .sort((a, b) => b.score - a.score)
     .slice(0, 5)
-  const shouldShowPickHistory = picks.length > 0
   const suppressHoverDetailsAfterScroll = useCallback(() => {
     hoverDetailsSuppressedUntil.current =
       Date.now() + HOVER_DETAIL_SCROLL_COOLDOWN_MS
@@ -87,7 +86,7 @@ export function DraftPickHelperModule({
           ) : null}
         </div>
 
-        {shouldShowPickHistory && !isMinimized ? (
+        {!isMinimized ? (
           <aside className="draft-latest-picks">
             <PickList
               autoScrollToEnd

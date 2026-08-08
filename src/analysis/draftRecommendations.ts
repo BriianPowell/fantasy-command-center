@@ -22,9 +22,16 @@ const DRAFT_CANDIDATE_LIMITS: Partial<Record<Position, number>> = {
   DEF: 30,
 }
 
+interface RosterFit {
+  currentDepth: number
+  primaryPosition: Position
+  requiredSlots: number
+  targetDepth: number
+}
+
 export interface DraftRecommendationInput {
   players: Player[]
-  draftedPlayerIds: Set<string>
+  unavailablePlayerIds: Set<string>
   roster?: Roster
   leagueSettings: LeagueSettings
   rankings: Ranking[]
@@ -54,11 +61,11 @@ export function buildDraftRecommendations(
     : new Map<number, number>()
   const draftCandidates = getDraftCandidates(
     input.players,
-    input.draftedPlayerIds
+    input.unavailablePlayerIds
   )
   const remainingByPosition = countRemainingByPosition(
     draftCandidates,
-    input.draftedPlayerIds
+    input.unavailablePlayerIds
   )
 
   return draftCandidates
@@ -67,12 +74,13 @@ export function buildDraftRecommendations(
       const projection = projectionByPlayer.get(player.id)
       const note = noteByPlayer.get(player.id)
       const valueScore = scoreDraftPlayerValue(player, ranking, projection)
-      const needScore = scoreNeed(
+      const rosterFit = getRosterFit(
         player,
         rosterPositionCounts,
         input.roster,
         input.leagueSettings
       )
+      const needScore = scoreNeed(player, rosterFit)
       const scarcityScore = scoreScarcity(player, remainingByPosition)
       const strategyEvaluation = evaluatePlayerStrategy(
         player,
@@ -97,18 +105,33 @@ export function buildDraftRecommendations(
         scarcityScore,
         strategyScore: Math.round(strategyEvaluation.score),
         byeRisk,
+        insight: buildRecommendationInsight(
+          player,
+          rosterFit,
+          valueScore,
+          scarcityScore,
+          byeRisk
+        ),
         notes: [
           ...buildRecommendationNotes(
             player,
             ranking,
             projection,
             note,
+            rosterFit,
             needScore,
             scarcityScore,
             byeRisk
           ),
           ...strategyEvaluation.notes,
         ],
+        suggestion: buildPickSuggestion({
+          byeRisk,
+          needScore,
+          player,
+          scarcityScore,
+          valueScore,
+        }),
       }
     })
     .sort((a, b) => b.score - a.score)
@@ -116,7 +139,7 @@ export function buildDraftRecommendations(
 
 function getDraftCandidates(
   players: Player[],
-  draftedPlayerIds: Set<string>
+  unavailablePlayerIds: Set<string>
 ): Player[] {
   const playersByPosition = new Map<Position, Player[]>()
 
@@ -124,7 +147,7 @@ function getDraftCandidates(
     const primaryPosition = player.positions[0]
 
     if (
-      draftedPlayerIds.has(player.id) ||
+      unavailablePlayerIds.has(player.id) ||
       !DRAFT_CANDIDATE_LIMITS[primaryPosition]
     ) {
       continue
@@ -152,14 +175,14 @@ function compareSleeperSearchRank(a: Player, b: Player): number {
   )
 }
 
-function scoreNeed(
+function getRosterFit(
   player: Player,
   rosterCounts: Map<string, number>,
   roster: Roster | undefined,
   settings: LeagueSettings
-): number {
+): RosterFit | undefined {
   if (!roster) {
-    return 10
+    return undefined
   }
 
   const primaryPosition = player.positions[0]
@@ -172,12 +195,27 @@ function scoreNeed(
   const targetDepth = requiredSlots + flexSlots + benchBuffer(primaryPosition)
   const currentDepth = rosterCounts.get(primaryPosition) ?? 0
 
-  if (currentDepth === 0 && requiredSlots > 0) {
+  return {
+    currentDepth,
+    primaryPosition,
+    requiredSlots,
+    targetDepth,
+  }
+}
+
+function scoreNeed(player: Player, rosterFit: RosterFit | undefined): number {
+  if (!rosterFit) {
+    return 10
+  }
+
+  const primaryPosition = player.positions[0]
+
+  if (rosterFit.currentDepth === 0 && rosterFit.requiredSlots > 0) {
     return 35
   }
 
-  if (currentDepth < targetDepth) {
-    return 22 - currentDepth * 3
+  if (rosterFit.currentDepth < rosterFit.targetDepth) {
+    return 22 - rosterFit.currentDepth * 3
   }
 
   return primaryPosition === 'K' || primaryPosition === 'DEF' ? -10 : 3
@@ -243,12 +281,12 @@ function scoreByeRisk(
 
 function countRemainingByPosition(
   players: Player[],
-  draftedPlayerIds: Set<string>
+  unavailablePlayerIds: Set<string>
 ): Map<string, number> {
   const counts = new Map<string, number>()
 
   for (const player of players) {
-    if (draftedPlayerIds.has(player.id)) {
+    if (unavailablePlayerIds.has(player.id)) {
       continue
     }
 
@@ -283,6 +321,7 @@ function buildRecommendationNotes(
   ranking: Ranking | undefined,
   projection: Projection | undefined,
   note: PlayerNote | undefined,
+  rosterFit: RosterFit | undefined,
   needScore: number,
   scarcityScore: number,
   byeRisk: number
@@ -303,6 +342,10 @@ function buildRecommendationNotes(
 
   if (needScore >= 25) {
     notes.push(`Fills a starting ${player.positions[0]} need`)
+  } else if (rosterFit && rosterFit.currentDepth < rosterFit.targetDepth) {
+    notes.push(
+      `${rosterFit.currentDepth}/${rosterFit.targetDepth} target ${rosterFit.primaryPosition} depth`
+    )
   }
 
   if (scarcityScore >= 14) {
@@ -318,4 +361,74 @@ function buildRecommendationNotes(
   }
 
   return notes
+}
+
+function buildRecommendationInsight(
+  player: Player,
+  rosterFit: RosterFit | undefined,
+  valueScore: number,
+  scarcityScore: number,
+  byeRisk: number
+): string {
+  const primaryPosition = player.positions[0]
+
+  if (rosterFit && rosterFit.currentDepth < rosterFit.targetDepth) {
+    return `${primaryPosition} depth is ${rosterFit.currentDepth}/${rosterFit.targetDepth}, so this pick directly improves roster construction.`
+  }
+
+  if (scarcityScore >= 14) {
+    return `${primaryPosition} pool is thinning relative to the current draftable player set.`
+  }
+
+  if (valueScore >= 60 && player.searchRank) {
+    return `Sleeper search rank ${player.searchRank} keeps this player near the top of the available value pool.`
+  }
+
+  if (byeRisk >= 6) {
+    return `Bye week ${player.byeWeek} overlaps with several players already on your roster.`
+  }
+
+  return `Score combines Sleeper value, roster fit, positional scarcity, bye-week overlap, and strategy context.`
+}
+
+function buildPickSuggestion({
+  byeRisk,
+  needScore,
+  player,
+  scarcityScore,
+  valueScore,
+}: {
+  byeRisk: number
+  needScore: number
+  player: Player
+  scarcityScore: number
+  valueScore: number
+}): string {
+  const primaryPosition = player.positions[0]
+
+  if (primaryPosition === 'K' || primaryPosition === 'DEF') {
+    return 'Late-round target'
+  }
+
+  if (needScore >= 25) {
+    return 'Fill starter need'
+  }
+
+  if (valueScore >= 65 && scarcityScore >= 14) {
+    return 'Priority target'
+  }
+
+  if (valueScore >= 60) {
+    return 'Best value'
+  }
+
+  if (byeRisk >= 6) {
+    return 'Bye-week caution'
+  }
+
+  if (needScore > 0) {
+    return 'Depth target'
+  }
+
+  return 'Bench upside'
 }

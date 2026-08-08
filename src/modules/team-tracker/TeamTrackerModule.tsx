@@ -5,6 +5,11 @@ import {
   RosterSection,
   TrackerMetric,
 } from './TeamTrackerSections'
+import {
+  buildTeamValueSnapshot,
+  formatTeamValue,
+  formatTeamValueDelta,
+} from './teamValueModel'
 import './teamTracker.css'
 import { ModuleTrimToggle } from '../../components/dashboard/ModuleTrimToggle'
 import { getRecentDraftPicks } from '../../domain/draftPickUtils'
@@ -31,13 +36,19 @@ export function TeamTrackerModule({
     rosterId: selectedTeamId,
   })
   const scoringLabel = formatScoringType(data.league.settings.scoringType)
-  const rosterSpotCount = countRosterSpots(data.league.settings.rosterSlots)
   const tracker = buildTeamTrackerViewModel({
     draftPicks: data.draft?.picks ?? [],
     leagueSettings: data.league.settings,
     players: data.players,
     roster,
     selectedTeamId,
+  })
+  const teamValue = buildTeamValueSnapshot({
+    bench: tracker.bench,
+    draftedAdditions: tracker.draftedAdditions,
+    lineupSlots: tracker.lineupSlots,
+    picks: teamPicks,
+    players: data.players,
   })
 
   return (
@@ -62,12 +73,26 @@ export function TeamTrackerModule({
           </p>
         </div>
         <div className="team-tracker-summary">
-          <TrackerMetric label="Roster spots" value={String(rosterSpotCount)} />
           <TrackerMetric label="Scoring" value={scoringLabel} />
-          <TrackerMetric label="Players" value={String(tracker.totalPlayers)} />
           <TrackerMetric
-            label="Draft adds"
-            value={String(tracker.draftedAdditions.length)}
+            label="Team value"
+            value={formatTeamValue(teamValue.totalValue)}
+          />
+          <TrackerMetric
+            label="Starter value"
+            value={formatTeamValue(teamValue.starterValue)}
+          />
+          <TrackerMetric
+            label="Bench value"
+            value={formatTeamValue(teamValue.benchValue)}
+          />
+          <TrackerMetric
+            label="Draft value"
+            value={formatTeamValue(teamValue.draftedAdditionsValue)}
+          />
+          <TrackerMetric
+            label="Last pick"
+            value={formatTeamValueDelta(teamValue.latestPickDelta)}
           />
         </div>
       </div>
@@ -85,12 +110,6 @@ export function TeamTrackerModule({
       ) : null}
     </section>
   )
-}
-
-function countRosterSpots(
-  rosterSlots: NormalizedLeagueData['league']['settings']['rosterSlots']
-): number {
-  return Object.values(rosterSlots).reduce((total, count) => total + count, 0)
 }
 
 function formatScoringType(
