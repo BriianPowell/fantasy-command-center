@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  comparePlayersBySearchRank,
   formatDraftValueScore,
   scoreDraftPlayerValue,
 } from './playerValueUtils'
@@ -46,5 +47,21 @@ describe('formatDraftValueScore', () => {
     expect(formatDraftValueScore(10.4)).toBe('+10')
     expect(formatDraftValueScore(0)).toBe('0')
     expect(formatDraftValueScore(-2.6)).toBe('-3')
+  })
+})
+
+describe('comparePlayersBySearchRank', () => {
+  it('orders lower Sleeper search ranks first and missing ranks last', () => {
+    const sortedPlayers = [
+      { ...player, id: 'unranked' },
+      { ...player, id: 'rank-25', searchRank: 25 },
+      { ...player, id: 'rank-3', searchRank: 3 },
+    ].sort(comparePlayersBySearchRank)
+
+    expect(sortedPlayers.map((sortedPlayer) => sortedPlayer.id)).toEqual([
+      'rank-3',
+      'rank-25',
+      'unranked',
+    ])
   })
 })

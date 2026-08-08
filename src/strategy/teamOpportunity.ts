@@ -5,6 +5,8 @@ import type {
   StrategyEvaluation,
   TeamOpportunityProfile,
 } from './types'
+import { comparePlayersBySearchRank } from '../domain/playerValueUtils'
+import { getPrimaryPosition } from '../domain/positionUtils'
 import type { Player, Position } from '../domain/types'
 
 const inferredDepthChartCache = new WeakMap<
@@ -70,7 +72,14 @@ export function evaluatePlayerStrategy(
     }
   }
 
-  const primaryPosition = player.positions[0]
+  const primaryPosition = getPrimaryPosition(player.positions)
+  if (!primaryPosition) {
+    return {
+      score: 0,
+      notes: [],
+    }
+  }
+
   const teamProfile = context.teamProfiles[player.team]
   const positionProfile = teamProfile?.positions[primaryPosition]
   const depthChartRank = findDepthChartRank(player, context, teamProfile)
@@ -157,7 +166,11 @@ export function summarizeTeamStrategy(
     return undefined
   }
 
-  const primaryPosition = player.positions[0]
+  const primaryPosition = getPrimaryPosition(player.positions)
+  if (!primaryPosition) {
+    return undefined
+  }
+
   const profile = context.teamProfiles[player.team]?.positions[primaryPosition]
   const share = profile?.fantasyPointShare
   const depthChartRank = findDepthChartRank(
@@ -191,7 +204,11 @@ function inferDepthCharts(
       continue
     }
 
-    const position = player.positions[0]
+    const position = getPrimaryPosition(player.positions)
+    if (!position) {
+      continue
+    }
+
     const teamPositions =
       teamDepthCharts.get(player.team) ?? new Map<Position, Player[]>()
     teamPositions.set(position, [
@@ -205,11 +222,7 @@ function inferDepthCharts(
     for (const [position, positionPlayers] of teamPositions) {
       teamPositions.set(
         position,
-        [...positionPlayers].sort(
-          (a, b) =>
-            (a.searchRank ?? Number.MAX_SAFE_INTEGER) -
-            (b.searchRank ?? Number.MAX_SAFE_INTEGER)
-        )
+        [...positionPlayers].sort(comparePlayersBySearchRank)
       )
     }
   }
@@ -222,7 +235,11 @@ function findDepthChartRank(
   context: StrategyContext,
   teamProfile: TeamOpportunityProfile | undefined
 ): number | undefined {
-  const primaryPosition = player.positions[0]
+  const primaryPosition = getPrimaryPosition(player.positions)
+  if (!primaryPosition) {
+    return undefined
+  }
+
   const manualEntry = teamProfile?.positions[primaryPosition]?.depthChart?.find(
     (entry) => {
       if (entry.playerId) {

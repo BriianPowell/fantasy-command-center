@@ -48,7 +48,10 @@ export function DraftPickHelperModule({
   const hoverDetailsSuppressedUntil = useRef(0)
   const recommendationsByPosition =
     groupRecommendationsByPosition(recommendations)
-  const visiblePositions = getVisiblePositions(recommendationsByPosition)
+  const visiblePositions = getVisiblePositions(
+    recommendationsByPosition,
+    data.league.settings
+  )
   const picks = data.draft?.picks ?? []
   const myPicks = getDraftPicksForRoster(picks, selectedTeamId)
   const availablePlayerCount = recommendations.length

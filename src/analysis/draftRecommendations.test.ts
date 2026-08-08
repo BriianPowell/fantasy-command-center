@@ -60,11 +60,27 @@ describe('buildDraftRecommendations', () => {
       position: 'DB',
       searchRank: 2,
     })
+    const kicker = makePlayer({
+      id: 'kicker',
+      position: 'K',
+      searchRank: 3,
+    })
+    const defense = makePlayer({
+      id: 'defense',
+      position: 'DEF',
+      searchRank: 4,
+    })
 
     const recommendations = buildDraftRecommendations({
       leagueSettings,
       notes: [],
-      players: [availableRunningBack, unavailableRunningBack, defensiveBack],
+      players: [
+        availableRunningBack,
+        unavailableRunningBack,
+        defensiveBack,
+        kicker,
+        defense,
+      ],
       projections: [],
       rankings: [],
       unavailablePlayerIds: new Set([unavailableRunningBack.id]),

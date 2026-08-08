@@ -1,5 +1,12 @@
-import { getPrimaryPosition } from '../../domain/positionUtils'
-import type { DraftRecommendation, Position } from '../../domain/types'
+import {
+  getPrimaryPosition,
+  isPositionConfiguredForLeague,
+} from '../../domain/positionUtils'
+import type {
+  DraftRecommendation,
+  LeagueSettings,
+  Position,
+} from '../../domain/types'
 
 export {
   getPositionClass,
@@ -35,7 +42,8 @@ export function groupRecommendationsByPosition(
 }
 
 export function getVisiblePositions(
-  groupedRecommendations: Map<Position, DraftRecommendation[]>
+  groupedRecommendations: Map<Position, DraftRecommendation[]>,
+  leagueSettings: LeagueSettings
 ): Position[] {
   const remainingPositions = Array.from(groupedRecommendations.keys()).filter(
     (position) => !PREFERRED_POSITION_ORDER.includes(position)
@@ -44,6 +52,7 @@ export function getVisiblePositions(
   return [...PREFERRED_POSITION_ORDER, ...remainingPositions].filter(
     (position) =>
       !HIDDEN_DRAFT_POSITIONS.has(position) &&
+      isPositionConfiguredForLeague(position, leagueSettings) &&
       (groupedRecommendations.get(position)?.length ?? 0) > 0
   )
 }

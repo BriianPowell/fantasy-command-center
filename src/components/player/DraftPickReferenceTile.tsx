@@ -5,7 +5,10 @@ import {
   formatDraftValueScore,
   scoreDraftPlayerValue,
 } from '../../domain/playerValueUtils'
-import { getPositionClass } from '../../domain/positionUtils'
+import {
+  getPositionClass,
+  getPrimaryPosition,
+} from '../../domain/positionUtils'
 import type { DraftPick, Player } from '../../domain/types'
 
 export type DraftPickReferenceTileTone = 'pick' | 'roster'
@@ -21,7 +24,8 @@ export function DraftPickReferenceTile({
   player?: Player
   tone?: DraftPickReferenceTileTone
 }) {
-  const position = player?.positions[0] ?? pick.metadata?.position
+  const position =
+    getPrimaryPosition(player?.positions ?? []) ?? pick.metadata?.position
   const valueScore = player
     ? formatDraftValueScore(scoreDraftPlayerValue(player))
     : undefined

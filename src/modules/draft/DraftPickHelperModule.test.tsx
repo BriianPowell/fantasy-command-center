@@ -79,6 +79,28 @@ const recommendation: DraftRecommendation = {
   valueScore: 77,
 }
 
+const kickerRecommendation: DraftRecommendation = {
+  ...recommendation,
+  player: {
+    fullName: 'Kicker Player',
+    id: 'kicker-player',
+    positions: ['K'],
+    providerPlayerId: 'kicker-player',
+    searchRank: 2,
+  },
+}
+
+const defenseRecommendation: DraftRecommendation = {
+  ...recommendation,
+  player: {
+    fullName: 'Defense Player',
+    id: 'defense-player',
+    positions: ['DEF'],
+    providerPlayerId: 'defense-player',
+    searchRank: 3,
+  },
+}
+
 describe('DraftPickHelperModule', () => {
   it('renders the draft room, status chips, best available, and board columns', () => {
     render(
@@ -103,5 +125,29 @@ describe('DraftPickHelperModule', () => {
     expect(screen.getAllByText('Recommended Player').length).toBeGreaterThan(0)
     expect(screen.getByText('Latest Picks')).toBeInTheDocument()
     expect(screen.getByText('Picked Player')).toBeInTheDocument()
+  })
+
+  it('does not render columns for positions with no league roster slots', () => {
+    render(
+      <DraftPickHelperModule
+        boardMode="full_pool"
+        data={leagueData}
+        draftMode="redraft"
+        isMinimized={false}
+        onToggleMinimized={vi.fn()}
+        recommendations={[
+          recommendation,
+          kickerRecommendation,
+          defenseRecommendation,
+        ]}
+        selectedTeamId="team-1"
+      />
+    )
+
+    expect(screen.getByRole('heading', { name: 'RB' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'K' })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'DEF' })
+    ).not.toBeInTheDocument()
   })
 })

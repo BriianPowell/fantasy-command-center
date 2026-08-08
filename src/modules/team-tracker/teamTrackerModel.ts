@@ -1,4 +1,9 @@
 import { getDraftedPlayerIdsForRoster } from '../../domain/draftPickUtils'
+import {
+  canFillFlexPosition,
+  canFillSuperFlexPosition,
+  getPrimaryPosition,
+} from '../../domain/positionUtils'
 import type {
   DraftPick,
   LeagueSettings,
@@ -17,8 +22,6 @@ const LINEUP_SLOT_ORDER: LineupSlotType[] = [
   'K',
   'DEF',
 ]
-const FLEX_POSITIONS = new Set<Position>(['RB', 'WR', 'TE'])
-const SUPER_FLEX_POSITIONS = new Set<Position>(['QB', 'RB', 'WR', 'TE'])
 
 export type LineupSlotType = Position | 'FLEX' | 'SUPER_FLEX'
 
@@ -69,7 +72,9 @@ export function buildTeamTrackerViewModel({
   const trackedPlayers = trackedPlayerIds.flatMap<TeamTrackerPlayer>(
     (playerId) => {
       const player = playersById.get(playerId)
-      const primaryPosition = player?.positions[0]
+      const primaryPosition = player
+        ? getPrimaryPosition(player.positions)
+        : undefined
 
       if (!player || !primaryPosition) {
         return []
@@ -161,13 +166,13 @@ function findOpenSlot(
       (slot) =>
         !slot.player &&
         slot.slot === 'FLEX' &&
-        FLEX_POSITIONS.has(player.primaryPosition)
+        canFillFlexPosition(player.primaryPosition)
     ) ??
     slots.find(
       (slot) =>
         !slot.player &&
         slot.slot === 'SUPER_FLEX' &&
-        SUPER_FLEX_POSITIONS.has(player.primaryPosition)
+        canFillSuperFlexPosition(player.primaryPosition)
     )
   )
 }

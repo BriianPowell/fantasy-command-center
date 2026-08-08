@@ -11,6 +11,7 @@ import {
   normalizeTransaction,
   normalizeTrendingPlayer,
 } from './sleeperNormalizers'
+import { comparePlayersBySearchRank } from '../../domain/playerValueUtils'
 import type {
   DraftState,
   LeagueMatchup,
@@ -110,10 +111,6 @@ export class SleeperProvider {
       .filter((player) => player.active !== false)
       .map(normalizePlayer)
       .filter((player): player is Player => Boolean(player))
-      .sort(
-        (a, b) =>
-          (a.searchRank ?? Number.MAX_SAFE_INTEGER) -
-          (b.searchRank ?? Number.MAX_SAFE_INTEGER)
-      )
+      .sort(comparePlayersBySearchRank)
   }
 }

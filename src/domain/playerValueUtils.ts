@@ -1,5 +1,12 @@
 import type { Player, Projection, Ranking } from './types'
 
+export function comparePlayersBySearchRank(a: Player, b: Player): number {
+  return (
+    (a.searchRank ?? Number.MAX_SAFE_INTEGER) -
+    (b.searchRank ?? Number.MAX_SAFE_INTEGER)
+  )
+}
+
 export function scoreDraftPlayerValue(
   player: Player,
   ranking?: Ranking,

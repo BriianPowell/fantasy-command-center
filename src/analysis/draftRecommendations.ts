@@ -3,7 +3,15 @@ import {
   shouldIncludePlayerInDraftBoard,
 } from '../domain/draftBoardMode'
 import type { DraftBoardMode } from '../domain/draftBoardMode'
-import { scoreDraftPlayerValue } from '../domain/playerValueUtils'
+import {
+  comparePlayersBySearchRank,
+  scoreDraftPlayerValue,
+} from '../domain/playerValueUtils'
+import {
+  canFillFlexPosition,
+  getPrimaryPosition,
+  isPositionConfiguredForLeague,
+} from '../domain/positionUtils'
 import type {
   DraftRecommendation,
   LeagueSettings,
@@ -17,7 +25,6 @@ import type {
 import { evaluatePlayerStrategy } from '../strategy/teamOpportunity'
 import type { StrategyContext } from '../strategy/types'
 
-const FLEX_POSITIONS = new Set(['RB', 'WR', 'TE'])
 const DRAFT_CANDIDATE_LIMITS: Partial<Record<Position, number>> = {
   QB: 50,
   RB: 120,
@@ -68,7 +75,8 @@ export function buildDraftRecommendations(
   const draftCandidates = getDraftCandidates(
     input.players,
     input.unavailablePlayerIds,
-    input.boardMode ?? defaultDraftBoardMode
+    input.boardMode ?? defaultDraftBoardMode,
+    input.leagueSettings
   )
   const remainingByPosition = countRemainingByPosition(
     draftCandidates,
@@ -147,16 +155,22 @@ export function buildDraftRecommendations(
 function getDraftCandidates(
   players: Player[],
   unavailablePlayerIds: Set<string>,
-  boardMode: DraftBoardMode
+  boardMode: DraftBoardMode,
+  leagueSettings: LeagueSettings
 ): Player[] {
   const playersByPosition = new Map<Position, Player[]>()
 
   for (const player of players) {
-    const primaryPosition = player.positions[0]
+    const primaryPosition = getPrimaryPosition(player.positions)
+
+    if (!primaryPosition) {
+      continue
+    }
 
     if (
       unavailablePlayerIds.has(player.id) ||
       !shouldIncludePlayerInDraftBoard(player, boardMode) ||
+      !isPositionConfiguredForLeague(primaryPosition, leagueSettings) ||
       !DRAFT_CANDIDATE_LIMITS[primaryPosition]
     ) {
       continue
@@ -171,16 +185,9 @@ function getDraftCandidates(
   return Array.from(playersByPosition.entries()).flatMap(
     ([position, positionPlayers]) => {
       return positionPlayers
-        .sort(compareSleeperSearchRank)
+        .sort(comparePlayersBySearchRank)
         .slice(0, DRAFT_CANDIDATE_LIMITS[position])
     }
-  )
-}
-
-function compareSleeperSearchRank(a: Player, b: Player): number {
-  return (
-    (a.searchRank ?? Number.MAX_SAFE_INTEGER) -
-    (b.searchRank ?? Number.MAX_SAFE_INTEGER)
   )
 }
 
@@ -194,10 +201,14 @@ function getRosterFit(
     return undefined
   }
 
-  const primaryPosition = player.positions[0]
+  const primaryPosition = getPrimaryPosition(player.positions)
+  if (!primaryPosition) {
+    return undefined
+  }
+
   const requiredSlots = settings.rosterSlots[primaryPosition] ?? 0
   const flexSlots = player.positions.some((position) =>
-    FLEX_POSITIONS.has(position)
+    canFillFlexPosition(position)
   )
     ? (settings.rosterSlots.FLEX ?? 0)
     : 0
@@ -217,7 +228,7 @@ function scoreNeed(player: Player, rosterFit: RosterFit | undefined): number {
     return 10
   }
 
-  const primaryPosition = player.positions[0]
+  const primaryPosition = getPrimaryPosition(player.positions)
 
   if (rosterFit.currentDepth === 0 && rosterFit.requiredSlots > 0) {
     return 35
@@ -237,7 +248,9 @@ function countRosterPositions(
   const counts = new Map<string, number>()
 
   for (const playerId of roster.playerIds) {
-    const position = playersById.get(playerId)?.positions[0] ?? 'UNKNOWN'
+    const position =
+      getPrimaryPosition(playersById.get(playerId)?.positions ?? []) ??
+      'UNKNOWN'
     counts.set(position, (counts.get(position) ?? 0) + 1)
   }
 
@@ -260,7 +273,11 @@ function scoreScarcity(
   player: Player,
   remainingByPosition: Map<string, number>
 ): number {
-  const primaryPosition = player.positions[0]
+  const primaryPosition = getPrimaryPosition(player.positions)
+  if (!primaryPosition) {
+    return 0
+  }
+
   const remainingAtPosition = remainingByPosition.get(primaryPosition) ?? 0
 
   if (primaryPosition === 'RB' || primaryPosition === 'TE') {
@@ -299,7 +316,11 @@ function countRemainingByPosition(
       continue
     }
 
-    const position = player.positions[0]
+    const position = getPrimaryPosition(player.positions)
+    if (!position) {
+      continue
+    }
+
     counts.set(position, (counts.get(position) ?? 0) + 1)
   }
 
@@ -350,7 +371,7 @@ function buildRecommendationNotes(
   }
 
   if (needScore >= 25) {
-    notes.push(`Fills a starting ${player.positions[0]} need`)
+    notes.push(`Fills a starting ${getPrimaryPosition(player.positions)} need`)
   } else if (rosterFit && rosterFit.currentDepth < rosterFit.targetDepth) {
     notes.push(
       `${rosterFit.currentDepth}/${rosterFit.targetDepth} target ${rosterFit.primaryPosition} depth`
@@ -358,7 +379,7 @@ function buildRecommendationNotes(
   }
 
   if (scarcityScore >= 14) {
-    notes.push(`${player.positions[0]} scarcity boost`)
+    notes.push(`${getPrimaryPosition(player.positions)} scarcity boost`)
   }
 
   if (byeRisk > 0) {
@@ -379,7 +400,7 @@ function buildRecommendationInsight(
   scarcityScore: number,
   byeRisk: number
 ): string {
-  const primaryPosition = player.positions[0]
+  const primaryPosition = getPrimaryPosition(player.positions)
 
   if (rosterFit && rosterFit.currentDepth < rosterFit.targetDepth) {
     return `${primaryPosition} depth is ${rosterFit.currentDepth}/${rosterFit.targetDepth}, so this pick directly improves roster construction.`
@@ -413,7 +434,7 @@ function buildPickSuggestion({
   scarcityScore: number
   valueScore: number
 }): string {
-  const primaryPosition = player.positions[0]
+  const primaryPosition = getPrimaryPosition(player.positions)
 
   if (primaryPosition === 'K' || primaryPosition === 'DEF') {
     return 'Late-round target'
