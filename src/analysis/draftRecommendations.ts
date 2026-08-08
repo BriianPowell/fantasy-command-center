@@ -1,3 +1,8 @@
+import {
+  defaultDraftBoardMode,
+  shouldIncludePlayerInDraftBoard,
+} from '../domain/draftBoardMode'
+import type { DraftBoardMode } from '../domain/draftBoardMode'
 import { scoreDraftPlayerValue } from '../domain/playerValueUtils'
 import type {
   DraftRecommendation,
@@ -30,6 +35,7 @@ interface RosterFit {
 }
 
 export interface DraftRecommendationInput {
+  boardMode?: DraftBoardMode
   players: Player[]
   unavailablePlayerIds: Set<string>
   roster?: Roster
@@ -61,7 +67,8 @@ export function buildDraftRecommendations(
     : new Map<number, number>()
   const draftCandidates = getDraftCandidates(
     input.players,
-    input.unavailablePlayerIds
+    input.unavailablePlayerIds,
+    input.boardMode ?? defaultDraftBoardMode
   )
   const remainingByPosition = countRemainingByPosition(
     draftCandidates,
@@ -139,7 +146,8 @@ export function buildDraftRecommendations(
 
 function getDraftCandidates(
   players: Player[],
-  unavailablePlayerIds: Set<string>
+  unavailablePlayerIds: Set<string>,
+  boardMode: DraftBoardMode
 ): Player[] {
   const playersByPosition = new Map<Position, Player[]>()
 
@@ -148,6 +156,7 @@ function getDraftCandidates(
 
     if (
       unavailablePlayerIds.has(player.id) ||
+      !shouldIncludePlayerInDraftBoard(player, boardMode) ||
       !DRAFT_CANDIDATE_LIMITS[primaryPosition]
     ) {
       continue

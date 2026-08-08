@@ -1,32 +1,20 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { buildDraftRecommendations } from './analysis/draftRecommendations'
-import { fantasyConfig } from './config/fantasyConfig'
+import { useEffect, useRef, useState } from 'react'
 import {
-  defaultPlayerNotes,
-  defaultProjections,
-  defaultRankings,
-} from './data/defaultInputs'
-import type {
-  NflState,
-  NormalizedLeagueData,
-  Player,
-  Roster,
-} from './domain/types'
-import { DraftPickHelperModule } from './modules/draft'
-import { TeamTrackerModule } from './modules/team-tracker/TeamTrackerModule'
+  type DashboardModuleId,
+  defaultMinimizedModules,
+} from './components/dashboard/dashboardTypes'
+import { EmptyState } from './components/dashboard/EmptyState'
+import { LeagueDashboard } from './components/dashboard/LeagueDashboard'
+import { TopBar } from './components/dashboard/TopBar'
+import { fantasyConfig } from './config/fantasyConfig'
+import type { NflState, NormalizedLeagueData, Player } from './domain/types'
 import { loadNflTeamByeWeeks } from './providers/schedule/nflScheduleApi'
 import { SleeperProvider } from './providers/sleeper/SleeperProvider'
 import { loadJson, saveJson } from './storage/localStorage'
-import { buildStrategyContext } from './strategy/teamOpportunity'
 import { getCurrentNflWeek } from './utils/nflWeek'
 
 const sleeperProvider = new SleeperProvider()
 const configuredLeagueIds = [...fantasyConfig.sleeperLeagueIds]
-type DashboardModuleId = 'teamTracker' | 'draftRoom'
-const defaultMinimizedModules: Record<DashboardModuleId, boolean> = {
-  draftRoom: false,
-  teamTracker: false,
-}
 
 export function App() {
   const fallbackWeek = getCurrentNflWeek()
@@ -163,7 +151,6 @@ export function App() {
         <LeagueDashboard
           data={activeLeague}
           minimizedModules={minimizedModules}
-          selectedTeamId={resolveSelectedTeamId(activeLeague)}
           onToggleModule={(moduleId) =>
             setMinimizedModules((current) => ({
               ...current,
@@ -175,59 +162,6 @@ export function App() {
         <EmptyState />
       )}
     </main>
-  )
-}
-
-function TopBar({
-  activeDashboardId,
-  leagueIds,
-  leagues,
-  weekLabel,
-  status,
-  onActiveDashboardChange,
-}: {
-  activeDashboardId: string
-  leagueIds: string[]
-  leagues: NormalizedLeagueData[]
-  weekLabel: string
-  status: string
-  onActiveDashboardChange: (leagueId: string) => void
-}) {
-  return (
-    <header className="top-bar">
-      <p className="status-line top-status">
-        <span className="status-dot" />
-        {status}
-      </p>
-      <div className="brand-block">
-        <h1>Fantasy Command Center</h1>
-      </div>
-
-      <nav className="league-tabs" aria-label="League dashboards">
-        {leagues.length ? (
-          leagues.map((league) => (
-            <button
-              className={
-                league.league.id === activeDashboardId
-                  ? 'league-tab active'
-                  : 'league-tab'
-              }
-              key={league.league.id}
-              onClick={() => onActiveDashboardChange(league.league.id)}
-              type="button"
-            >
-              {league.league.name}
-            </button>
-          ))
-        ) : (
-          <span className="league-tabs-loading">
-            Loading {leagueIds.length} leagues...
-          </span>
-        )}
-      </nav>
-
-      <div className="week-pill">{weekLabel}</div>
-    </header>
   )
 }
 
@@ -275,135 +209,6 @@ async function hydratePlayerByeWeeks(
   }
 }
 
-function LeagueDashboard({
-  data,
-  minimizedModules,
-  onToggleModule,
-  selectedTeamId,
-}: {
-  data: NormalizedLeagueData
-  minimizedModules: Record<DashboardModuleId, boolean>
-  onToggleModule: (moduleId: DashboardModuleId) => void
-  selectedTeamId: string
-}) {
-  const baseRoster = useMemo(
-    () => data.rosters.find((roster) => roster.teamId === selectedTeamId),
-    [data.rosters, selectedTeamId]
-  )
-  const selectedRoster = useMemo(() => {
-    return buildDraftAwareRoster(baseRoster, data, selectedTeamId)
-  }, [baseRoster, data, selectedTeamId])
-
-  const unavailablePlayerIds = useMemo(() => {
-    const draftedFromSleeper =
-      data.draft?.picks.flatMap((pick) =>
-        pick.playerId ? [pick.playerId] : []
-      ) ?? []
-    const rosteredPlayers = data.rosters.flatMap((roster) => roster.playerIds)
-
-    return new Set([...draftedFromSleeper, ...rosteredPlayers])
-  }, [data.draft?.picks, data.rosters])
-
-  const strategyContext = useMemo(() => {
-    return buildStrategyContext({
-      players: data.players,
-    })
-  }, [data.players])
-
-  const recommendations = useMemo(() => {
-    return buildDraftRecommendations({
-      players: data.players,
-      unavailablePlayerIds,
-      roster: selectedRoster,
-      leagueSettings: data.league.settings,
-      rankings: defaultRankings,
-      projections: defaultProjections,
-      notes: defaultPlayerNotes,
-      strategyContext,
-    })
-  }, [
-    data.league.settings,
-    data.players,
-    selectedRoster,
-    strategyContext,
-    unavailablePlayerIds,
-  ])
-
-  return (
-    <article className="league-dashboard">
-      <TeamTrackerModule
-        data={data}
-        isMinimized={minimizedModules.teamTracker}
-        onToggleMinimized={() => onToggleModule('teamTracker')}
-        roster={baseRoster}
-        selectedTeamId={selectedTeamId}
-      />
-      <DraftPickHelperModule
-        data={data}
-        isMinimized={minimizedModules.draftRoom}
-        onToggleMinimized={() => onToggleModule('draftRoom')}
-        recommendations={recommendations}
-        selectedTeamId={selectedTeamId}
-      />
-    </article>
-  )
-}
-
-function EmptyState() {
-  return (
-    <section className="panel empty-state">
-      <h2>Ready for your leagues</h2>
-      <p>
-        Your configured Sleeper leagues and usernames load automatically. Once
-        loaded, choose a dashboard from the top bar to use the draft helper
-        module.
-      </p>
-    </section>
-  )
-}
-
-function buildDraftAwareRoster(
-  roster: Roster | undefined,
-  data: NormalizedLeagueData,
-  teamId: string
-): Roster | undefined {
-  if (!roster) {
-    return undefined
-  }
-
-  const draftedForTeam =
-    data.draft?.picks.flatMap((pick) =>
-      pick.rosterId === teamId && pick.playerId ? [pick.playerId] : []
-    ) ?? []
-
-  return {
-    ...roster,
-    playerIds: Array.from(new Set([...roster.playerIds, ...draftedForTeam])),
-  }
-}
-
 function readError(error: unknown): string {
   return error instanceof Error ? error.message : 'Unknown error'
-}
-
-function resolveSelectedTeamId(data: NormalizedLeagueData): string {
-  const configuredTeams = data.teams.filter(isConfiguredOwner)
-
-  return configuredTeams[0]?.id ?? data.teams[0]?.id ?? ''
-}
-
-function isConfiguredOwner(
-  team: NormalizedLeagueData['teams'][number]
-): boolean {
-  const configuredOwners =
-    fantasyConfig.sleeperUsernames.map(normalizeIdentifier)
-
-  return [team.ownerUsername, team.ownerName, team.ownerId].some(
-    (ownerValue) =>
-      ownerValue && configuredOwners.includes(normalizeIdentifier(ownerValue))
-  )
-}
-
-function normalizeIdentifier(value: string): string {
-  return value.trim().toLowerCase()
 }

@@ -83,7 +83,9 @@ describe('DraftPickHelperModule', () => {
   it('renders the draft room, status chips, best available, and board columns', () => {
     render(
       <DraftPickHelperModule
+        boardMode="full_pool"
         data={leagueData}
+        draftMode="redraft"
         isMinimized={false}
         onToggleMinimized={vi.fn()}
         recommendations={[recommendation]}
@@ -94,6 +96,8 @@ describe('DraftPickHelperModule', () => {
     expect(
       screen.getByRole('heading', { name: 'Draft Room' })
     ).toBeInTheDocument()
+    expect(screen.getByText('Redraft')).toBeInTheDocument()
+    expect(screen.getByText('Full pool')).toBeInTheDocument()
     expect(screen.getByText('Board pool')).toBeInTheDocument()
     expect(screen.getByText('Best Available')).toBeInTheDocument()
     expect(screen.getAllByText('Recommended Player').length).toBeGreaterThan(0)

@@ -26,10 +26,12 @@ function makePlayer({
   id,
   position,
   searchRank,
+  yearsExperience,
 }: {
   id: string
   position: Position
   searchRank: number
+  yearsExperience?: number
 }): Player {
   return {
     id,
@@ -37,6 +39,7 @@ function makePlayer({
     fullName: id,
     positions: [position],
     searchRank,
+    yearsExperience,
   }
 }
 
@@ -99,5 +102,63 @@ describe('buildDraftRecommendations', () => {
     expect(recommendations[0].valueScore).toBeGreaterThan(
       recommendations[1].valueScore
     )
+  })
+
+  it('filters veterans out of rookie-only board mode', () => {
+    const rookie = makePlayer({
+      id: 'rookie-rb',
+      position: 'RB',
+      searchRank: 20,
+      yearsExperience: 0,
+    })
+    const veteran = makePlayer({
+      id: 'veteran-rb',
+      position: 'RB',
+      searchRank: 1,
+      yearsExperience: 4,
+    })
+
+    const recommendations = buildDraftRecommendations({
+      boardMode: 'rookies_only',
+      leagueSettings,
+      notes: [],
+      players: [veteran, rookie],
+      projections: [],
+      rankings: [],
+      unavailablePlayerIds: new Set(),
+    })
+
+    expect(
+      recommendations.map((recommendation) => recommendation.player.id)
+    ).toEqual([rookie.id])
+  })
+
+  it('keeps veterans available in full-pool board mode', () => {
+    const rookie = makePlayer({
+      id: 'rookie-rb',
+      position: 'RB',
+      searchRank: 20,
+      yearsExperience: 0,
+    })
+    const veteran = makePlayer({
+      id: 'veteran-rb',
+      position: 'RB',
+      searchRank: 1,
+      yearsExperience: 4,
+    })
+
+    const recommendations = buildDraftRecommendations({
+      boardMode: 'full_pool',
+      leagueSettings,
+      notes: [],
+      players: [rookie, veteran],
+      projections: [],
+      rankings: [],
+      unavailablePlayerIds: new Set(),
+    })
+
+    expect(
+      recommendations.map((recommendation) => recommendation.player.id)
+    ).toContain(veteran.id)
   })
 })

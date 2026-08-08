@@ -10,6 +10,14 @@ import './draftRoom.css'
 import { StatusChip } from './StatusChip'
 import { ModuleTrimToggle } from '../../components/dashboard/ModuleTrimToggle'
 import { PickList } from '../../components/dashboard/PickList'
+import {
+  formatDraftBoardMode,
+  formatLeagueDraftMode,
+} from '../../domain/draftBoardMode'
+import type {
+  DraftBoardMode,
+  LeagueDraftMode,
+} from '../../domain/draftBoardMode'
 import type {
   DraftRecommendation,
   NormalizedLeagueData,
@@ -18,7 +26,9 @@ import type {
 const HOVER_DETAIL_SCROLL_COOLDOWN_MS = 250
 
 export interface DraftPickHelperModuleProps {
+  boardMode: DraftBoardMode
   data: NormalizedLeagueData
+  draftMode: LeagueDraftMode
   isMinimized: boolean
   onToggleMinimized: () => void
   recommendations: DraftRecommendation[]
@@ -26,7 +36,9 @@ export interface DraftPickHelperModuleProps {
 }
 
 export function DraftPickHelperModule({
+  boardMode,
   data,
+  draftMode,
   isMinimized,
   onToggleMinimized,
   recommendations,
@@ -68,6 +80,14 @@ export function DraftPickHelperModule({
               <StatusChip
                 label="Phase"
                 value={formatDraftStatus(data.draft?.status)}
+              />
+              <StatusChip
+                label="Mode"
+                value={formatLeagueDraftMode(draftMode)}
+              />
+              <StatusChip
+                label="Board"
+                value={formatDraftBoardMode(boardMode)}
               />
               <StatusChip label="Picks" value={String(picks.length)} />
               <StatusChip label="Your picks" value={String(myPicks.length)} />
