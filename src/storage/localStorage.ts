@@ -1,8 +1,17 @@
-export function loadJson<T>(key: string, fallback: T): T {
+export function loadJson<T>(
+  key: string,
+  fallback: T,
+  validate?: (value: unknown) => T | undefined
+): T {
   try {
     const raw = window.localStorage.getItem(key)
+    if (!raw) {
+      return fallback
+    }
 
-    return raw ? (JSON.parse(raw) as T) : fallback
+    const parsed = JSON.parse(raw) as unknown
+
+    return validate ? (validate(parsed) ?? fallback) : (parsed as T)
   } catch {
     return fallback
   }

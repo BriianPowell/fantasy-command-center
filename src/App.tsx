@@ -1,8 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import {
-  type DashboardModuleId,
-  defaultMinimizedModules,
-} from './components/dashboard/dashboardTypes'
+import { type DashboardModuleId } from './components/dashboard/dashboardTypes'
 import { EmptyState } from './components/dashboard/EmptyState'
 import { LeagueDashboard } from './components/dashboard/LeagueDashboard'
 import { TopBar } from './components/dashboard/TopBar'
@@ -10,7 +7,12 @@ import { fantasyConfig } from './config/fantasyConfig'
 import type { NflState, NormalizedLeagueData, Player } from './domain/types'
 import { loadNflTeamByeWeeks } from './providers/schedule/nflScheduleApi'
 import { SleeperProvider } from './providers/sleeper/SleeperProvider'
-import { loadJson, saveJson } from './storage/localStorage'
+import {
+  loadActiveDashboardId,
+  loadMinimizedModules,
+  saveActiveDashboardId,
+  saveMinimizedModules,
+} from './storage/dashboardPreferences'
 import { getCurrentNflWeek } from './utils/nflWeek'
 
 const sleeperProvider = new SleeperProvider()
@@ -20,22 +22,18 @@ export function App() {
   const fallbackWeek = getCurrentNflWeek()
   const [leagues, setLeagues] = useState<NormalizedLeagueData[]>([])
   const [activeDashboardId, setActiveDashboardId] = useState(() =>
-    loadJson('fcc:active-dashboard-id', '')
+    loadActiveDashboardId(configuredLeagueIds)
   )
-  const [minimizedModules, setMinimizedModules] = useState<
-    Record<DashboardModuleId, boolean>
-  >(() => ({
-    ...defaultMinimizedModules,
-    ...loadJson('fcc:minimized-modules', defaultMinimizedModules),
-  }))
+  const [minimizedModules, setMinimizedModules] =
+    useState<Record<DashboardModuleId, boolean>>(loadMinimizedModules)
   const [nflState, setNflState] = useState<NflState | undefined>()
   const [status, setStatus] = useState('Loading configured Sleeper leagues...')
   const [errors, setErrors] = useState<string[]>([])
   const hasAutoLoaded = useRef(false)
 
   useEffect(() => {
-    saveJson('fcc:active-dashboard-id', activeDashboardId)
-    saveJson('fcc:minimized-modules', minimizedModules)
+    saveActiveDashboardId(activeDashboardId)
+    saveMinimizedModules(minimizedModules)
   }, [activeDashboardId, minimizedModules])
 
   useEffect(() => {

@@ -36,4 +36,24 @@ describe('localStorage JSON helpers', () => {
 
     expect(loadJson('broken', { safe: true })).toEqual({ safe: true })
   })
+
+  it('returns validated parsed values', () => {
+    saveJson('count', 3)
+
+    expect(
+      loadJson('count', 0, (value) =>
+        typeof value === 'number' ? value : undefined
+      )
+    ).toBe(3)
+  })
+
+  it('returns the fallback when parsed values fail validation', () => {
+    saveJson('count', 'three')
+
+    expect(
+      loadJson('count', 0, (value) =>
+        typeof value === 'number' ? value : undefined
+      )
+    ).toBe(0)
+  })
 })
