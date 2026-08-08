@@ -1,0 +1,14 @@
+---
+description: Sleeper data model and enrichment conventions
+globs: src/providers/**/*.ts, src/domain/**/*.ts, src/App.tsx
+alwaysApply: false
+---
+
+# Sleeper Data Model
+
+- Treat Sleeper as the source of truth for leagues, rosters, drafts, picks, transactions, matchups, player identity, team, depth-chart metadata, and NFL state.
+- Normalize raw Sleeper responses at the provider boundary before passing data into modules.
+- Keep domain types provider-neutral, even when current data comes from Sleeper.
+- Do not assume the `players/nfl` response includes `bye_week`; current bye-week values may be schedule-derived.
+- Use `src/providers/schedule/nflScheduleApi.ts` to enrich missing player bye weeks by team.
+- Keep external schedule enrichment isolated from Sleeper normalization so fallback/enrichment behavior remains easy to reason about.

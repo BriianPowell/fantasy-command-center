@@ -1,0 +1,13 @@
+---
+description: Project workflow and change management conventions
+alwaysApply: true
+---
+
+# Project Workflow
+
+- Use GitHub issues to track feature and hardening work. Close issues only when the scoped work is implemented and validation is known.
+- Keep changes small and reviewable. Prefer focused passes over broad rewrites.
+- Do not revert user changes or generated local work unless explicitly asked.
+- Before committing, inspect status, diff, and recent commit style. Do not skip hooks unless the user explicitly asks.
+- When npm is unavailable in the agent environment, rely on the user's local `npm run lint`, `npm run test`, and `npm run build` confirmation.
+- Preserve the current plain-CSS, Sleeper-first, React + TypeScript architecture unless an issue explicitly changes direction.

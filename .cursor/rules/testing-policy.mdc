@@ -1,0 +1,14 @@
+---
+description: Testing conventions for focused repo coverage
+globs: src/**/*.test.ts, src/**/*.test.tsx
+alwaysApply: false
+---
+
+# Testing Policy
+
+- Prefer focused domain tests for pure helpers, scoring, sorting, filtering, parsing, and normalization.
+- Use React render tests as smoke coverage for module boundaries and important labels, not pixel-level layout assertions.
+- Keep test fixtures small and explicit. Avoid broad mock data unless the behavior requires it.
+- When a component renders repeated player names or labels, use `getAllByText` or role-based queries that tolerate repeated tiles.
+- Add regression tests for issue-driven fixes, especially board modes, roster-aware filtering, persisted state parsing, and schedule enrichment.
+- Do not expand tests to speculative future behavior unless the issue asks for it.

@@ -1,0 +1,14 @@
+---
+description: Draft recommendation and board behavior conventions
+globs: src/analysis/**/*.ts, src/strategy/**/*.ts, src/modules/draft/**/*.tsx, src/modules/draft/**/*.ts, src/components/dashboard/LeagueDashboard.tsx
+alwaysApply: false
+---
+
+# Draft Recommendation Logic
+
+- Keep recommendation scoring deterministic and explainable. Changes should preserve visible notes, suggestion labels, and insight text when scores shift.
+- Filter unavailable players using both draft picks and already rostered players before ranking candidates.
+- Respect league roster settings when deciding draftable positions. Do not show K, DEF, IDP, or other positions unless the league settings make them draftable.
+- Preserve draft board modes: active rookie drafts should use rookie-only boards, while dynasty season views can keep the full player pool.
+- Prefer shared domain helpers for primary position, flex eligibility, draft-aware rosters, pick ordering, and Sleeper search-rank sorting.
+- Add focused tests for scoring, filtering, board mode, and roster-slot behavior when changing recommendation logic.

@@ -1,0 +1,15 @@
+---
+description: Plain-CSS dashboard design system conventions
+globs: **/*.css
+alwaysApply: false
+---
+
+# Plain-CSS Dashboard System
+
+- Keep the dashboard on the existing plain-CSS path. Do not introduce Tailwind, Aceternity, CSS-in-JS, or a component library for routine polish.
+- Prefer shared CSS custom properties in `src/styles.css` for recurring colors, borders, muted text, surfaces, chips, and density values.
+- Keep module CSS focused on layout and module-specific composition. Reuse shared tokens before adding new hardcoded colors.
+- Preserve the current visual language: dark glass surfaces, subtle gradient borders, radial glow accents, position-tinted player context, and compact information density.
+- For shared UI patterns, consolidate selectors or tokens first; only add new React abstractions when CSS alone would create duplication or unclear ownership.
+- Keep Draft Room, Team Tracker, and player tiles visually consistent. When changing one pattern, check the related module for matching card, chip, metric, and scroll-panel treatment.
+- Favor small, reviewable visual passes. Avoid broad rewrites unless the issue explicitly calls for a larger redesign.

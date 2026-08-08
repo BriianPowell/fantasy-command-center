@@ -83,6 +83,8 @@ The week badge uses Sleeper's `state/nfl` endpoint. If Sleeper state is unavaila
 
 The current UI uses plain CSS for glass panels, gradient borders, radial glows, dark dashboard surfaces, and hover spotlight cards.
 
+Dashboard styling should stay on the plain-CSS path for now. Shared colors, borders, surfaces, chips, and muted text should use tokens in `src/styles.css`; module CSS should focus on layout and module-specific composition.
+
 ## Open Source Inspiration
 
 - [Sleeper Draft Assistant](https://github.com/itsreverence/sleeper-draft-assistant): local-first Sleeper draft assistant with deterministic recommendation evidence, roster construction, scarcity, ADP, tiers, and CSV imports.
