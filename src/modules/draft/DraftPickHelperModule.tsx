@@ -18,6 +18,7 @@ import type {
   DraftBoardMode,
   LeagueDraftMode,
 } from '../../domain/draftBoardMode'
+import { getDraftPicksForRoster } from '../../domain/draftPickUtils'
 import type {
   DraftRecommendation,
   NormalizedLeagueData,
@@ -49,7 +50,7 @@ export function DraftPickHelperModule({
     groupRecommendationsByPosition(recommendations)
   const visiblePositions = getVisiblePositions(recommendationsByPosition)
   const picks = data.draft?.picks ?? []
-  const myPicks = picks.filter((pick) => pick.rosterId === selectedTeamId)
+  const myPicks = getDraftPicksForRoster(picks, selectedTeamId)
   const availablePlayerCount = recommendations.length
   const bestAvailable = [...recommendations]
     .sort((a, b) => b.score - a.score)

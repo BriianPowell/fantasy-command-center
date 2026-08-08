@@ -11,7 +11,11 @@ import {
   type LeagueDraftModeConfig,
   resolveDraftBoardContext,
 } from '../../domain/draftBoardMode'
-import type { NormalizedLeagueData, Roster } from '../../domain/types'
+import {
+  buildDraftAwareRoster,
+  getDraftedPlayerIds,
+} from '../../domain/draftPickUtils'
+import type { NormalizedLeagueData } from '../../domain/types'
 import { DraftPickHelperModule } from '../../modules/draft'
 import { TeamTrackerModule } from '../../modules/team-tracker/TeamTrackerModule'
 import { buildStrategyContext } from '../../strategy/teamOpportunity'
@@ -32,19 +36,17 @@ export function LeagueDashboard({
     () => data.rosters.find((roster) => roster.teamId === selectedTeamId),
     [data.rosters, selectedTeamId]
   )
+  const picks = data.draft?.picks ?? []
   const selectedRoster = useMemo(() => {
-    return buildDraftAwareRoster(baseRoster, data, selectedTeamId)
-  }, [baseRoster, data, selectedTeamId])
+    return buildDraftAwareRoster(baseRoster, picks, selectedTeamId)
+  }, [baseRoster, picks, selectedTeamId])
 
   const unavailablePlayerIds = useMemo(() => {
-    const draftedFromSleeper =
-      data.draft?.picks.flatMap((pick) =>
-        pick.playerId ? [pick.playerId] : []
-      ) ?? []
+    const draftedFromSleeper = getDraftedPlayerIds(picks)
     const rosteredPlayers = data.rosters.flatMap((roster) => roster.playerIds)
 
     return new Set([...draftedFromSleeper, ...rosteredPlayers])
-  }, [data.draft?.picks, data.rosters])
+  }, [data.rosters, picks])
 
   const strategyContext = useMemo(() => {
     return buildStrategyContext({
@@ -100,26 +102,6 @@ export function LeagueDashboard({
       />
     </article>
   )
-}
-
-function buildDraftAwareRoster(
-  roster: Roster | undefined,
-  data: NormalizedLeagueData,
-  teamId: string
-): Roster | undefined {
-  if (!roster) {
-    return undefined
-  }
-
-  const draftedForTeam =
-    data.draft?.picks.flatMap((pick) =>
-      pick.rosterId === teamId && pick.playerId ? [pick.playerId] : []
-    ) ?? []
-
-  return {
-    ...roster,
-    playerIds: Array.from(new Set([...roster.playerIds, ...draftedForTeam])),
-  }
 }
 
 function resolveSelectedTeamId(data: NormalizedLeagueData): string {

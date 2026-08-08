@@ -1,3 +1,4 @@
+import { getDraftedPlayerIdsForRoster } from '../../domain/draftPickUtils'
 import type {
   DraftPick,
   LeagueSettings,
@@ -56,8 +57,9 @@ export function buildTeamTrackerViewModel({
 }): TeamTrackerViewModel {
   const playersById = new Map(players.map((player) => [player.id, player]))
   const rosterPlayerIds = roster?.playerIds ?? []
-  const draftAdditionIds = draftPicks.flatMap((pick) =>
-    pick.rosterId === selectedTeamId && pick.playerId ? [pick.playerId] : []
+  const draftAdditionIds = getDraftedPlayerIdsForRoster(
+    draftPicks,
+    selectedTeamId
   )
   const draftAdditionIdSet = new Set(draftAdditionIds)
   const trackedPlayerIds = Array.from(
