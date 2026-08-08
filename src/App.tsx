@@ -13,13 +13,11 @@ import {
   saveActiveDashboardId,
   saveMinimizedModules,
 } from './storage/dashboardPreferences'
-import { getCurrentNflWeek } from './utils/nflWeek'
 
 const sleeperProvider = new SleeperProvider()
 const configuredLeagueIds = [...fantasyConfig.sleeperLeagueIds]
 
 export function App() {
-  const fallbackWeek = getCurrentNflWeek()
   const [leagues, setLeagues] = useState<NormalizedLeagueData[]>([])
   const [activeDashboardId, setActiveDashboardId] = useState(() =>
     loadActiveDashboardId(configuredLeagueIds)
@@ -95,7 +93,7 @@ export function App() {
     try {
       const players = await sleeperProvider.loadPlayers()
       const { players: playersWithByeWeeks, warning: byeWeekWarning } =
-        await hydratePlayerByeWeeks(players)
+        await enrichPlayersWithScheduleByeWeeks(players)
       const loadedLeagueIds = new Set(
         loadedLeagues.map((league) => league.league.id)
       )
@@ -135,7 +133,7 @@ export function App() {
         activeDashboardId={activeLeague?.league.id ?? ''}
         leagueIds={configuredLeagueIds}
         leagues={leagues}
-        weekLabel={formatNflWeekLabel(nflState, fallbackWeek)}
+        weekLabel={formatNflWeekLabel(nflState)}
         status={status}
         onActiveDashboardChange={setActiveDashboardId}
       />
@@ -163,12 +161,9 @@ export function App() {
   )
 }
 
-function formatNflWeekLabel(
-  nflState: NflState | undefined,
-  fallbackWeek: number
-): string {
+function formatNflWeekLabel(nflState: NflState | undefined): string {
   if (!nflState) {
-    return `Week ${fallbackWeek}`
+    return 'Week TBD'
   }
 
   const week = nflState.displayWeek ?? nflState.week
@@ -184,7 +179,7 @@ function formatNflWeekLabel(
   return `Week ${week}`
 }
 
-async function hydratePlayerByeWeeks(
+async function enrichPlayersWithScheduleByeWeeks(
   players: Player[]
 ): Promise<{ players: Player[]; warning?: string }> {
   try {

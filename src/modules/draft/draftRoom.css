@@ -33,7 +33,7 @@
 }
 
 .draft-room-helper {
-  color: #9aa8c7;
+  color: var(--text-muted);
   flex-basis: 100%;
   font-size: 0.86rem;
   font-weight: 700;
@@ -45,8 +45,8 @@
   align-self: stretch;
   background:
     linear-gradient(135deg, rgba(96, 165, 250, 0.1), rgba(124, 58, 237, 0.08)),
-    rgba(15, 23, 42, 0.46);
-  border: 1px solid rgba(147, 197, 253, 0.14);
+    var(--surface-card-raised);
+  border: 1px solid var(--border-tinted);
   border-radius: 1rem;
   display: grid;
   flex: 0 1 420px;
@@ -84,7 +84,7 @@
   background:
     linear-gradient(135deg, rgba(96, 165, 250, 0.18), rgba(124, 58, 237, 0.12)),
     rgba(15, 23, 42, 0.54);
-  border: 1px solid rgba(147, 197, 253, 0.28);
+  border: 1px solid var(--chip-border);
   border-radius: 999px;
   color: #c7d2fe;
   display: inline-flex;
@@ -103,14 +103,14 @@
 }
 
 .status-chip-label {
-  color: rgba(199, 210, 254, 0.68);
+  color: var(--chip-label);
   font-size: 0.66rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
 .status-chip-value {
-  color: #f8fafc;
+  color: var(--chip-text);
   font-size: 0.82rem;
 }
 
@@ -126,8 +126,8 @@
   align-items: center;
   background:
     linear-gradient(135deg, rgba(59, 130, 246, 0.14), rgba(168, 85, 247, 0.1)),
-    rgba(15, 23, 42, 0.54);
-  border: 1px solid rgba(147, 197, 253, 0.16);
+    var(--surface-card-raised);
+  border: 1px solid var(--border-tinted);
   border-radius: 1rem;
   display: grid;
   gap: 0.65rem;
@@ -148,7 +148,7 @@
 
 .best-available-pill {
   background: rgba(3, 7, 18, 0.48);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-subtle);
   border-radius: 0.85rem;
   padding: 0.55rem;
 }

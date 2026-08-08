@@ -18,7 +18,7 @@
 }
 
 .team-tracker-header p {
-  color: #9aa8c7;
+  color: var(--text-muted);
   font-weight: 700;
   margin-bottom: 0;
 }
@@ -31,7 +31,7 @@
 
 .team-tracker-metric {
   background: rgba(7, 11, 24, 0.32);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--border-subtle);
   border-radius: 0.75rem;
   display: grid;
   gap: 0.14rem;
@@ -39,7 +39,7 @@
 }
 
 .team-tracker-metric span {
-  color: #9aa8c7;
+  color: var(--text-muted);
   font-size: 0.58rem;
   font-weight: 900;
   letter-spacing: 0.05em;
@@ -58,8 +58,8 @@
 }
 
 .team-roster-section {
-  background: rgba(3, 7, 18, 0.36);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
   border-radius: 1rem;
   min-width: 0;
   padding: 0.8rem;
@@ -78,9 +78,9 @@
 }
 
 .team-roster-section header span {
-  background: rgba(96, 165, 250, 0.16);
+  background: var(--chip-bg);
   border-radius: 999px;
-  color: #bfdbfe;
+  color: var(--chip-text);
   font-size: 0.72rem;
   font-weight: 900;
   padding: 0.25rem 0.48rem;
@@ -150,7 +150,7 @@
 
 .team-player-list p,
 .team-pick-list p {
-  color: #9aa8c7;
+  color: var(--text-muted);
   font-weight: 700;
   margin-bottom: 0;
 }

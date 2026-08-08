@@ -1,4 +1,13 @@
 :root {
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-tinted: rgba(147, 197, 253, 0.16);
+  --chip-bg: rgba(96, 165, 250, 0.16);
+  --chip-border: rgba(147, 197, 253, 0.24);
+  --chip-label: rgba(199, 210, 254, 0.68);
+  --chip-text: #bfdbfe;
+  --surface-card: rgba(3, 7, 18, 0.36);
+  --surface-card-raised: rgba(15, 23, 42, 0.54);
+  --text-muted: #9aa8c7;
   color: #e5ecff;
   background: #070b18;
   font-family:
@@ -198,7 +207,7 @@ p {
 }
 
 .league-tabs-loading {
-  color: #d8e1ff;
+  color: var(--chip-text);
   font-weight: 800;
   padding: 0.65rem 0.9rem;
 }
@@ -398,9 +407,9 @@ p {
 }
 
 .note-list span {
-  background: rgba(96, 165, 250, 0.15);
+  background: var(--chip-bg);
   border-radius: 999px;
-  color: #bfdbfe;
+  color: var(--chip-text);
   font-size: 0.78rem;
   font-weight: 800;
   padding: 0.25rem 0.55rem;
@@ -420,7 +429,24 @@ code {
 }
 
 .empty-state {
+  display: grid;
+  gap: 0.55rem;
+  justify-items: center;
+  margin-inline: auto;
+  max-width: 720px;
   text-align: center;
+}
+
+.empty-state h2,
+.empty-state p {
+  margin-bottom: 0;
+}
+
+.empty-state p {
+  color: var(--text-muted);
+  font-weight: 700;
+  line-height: 1.6;
+  max-width: 34rem;
 }
 
 @media (max-width: 900px) {

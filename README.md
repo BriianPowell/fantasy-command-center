@@ -66,11 +66,12 @@ export const fantasyConfig = {
 
 Configured leagues auto-load when the site opens. The main layout is a command center shell with top-bar tabs for each league and a read-only NFL state badge. League, roster, and draft data load first; the larger Sleeper player pool fills in afterward for draft recommendations. The Sleeper provider also exposes lazy methods for NFL state, matchups, transactions, traded picks, and trending players as later modules need them. Each selected league dashboard currently focuses on the Team Tracker and Draft Room modules. When one of the configured usernames owns a team in a league, the dashboard narrows to that team.
 
-The week badge prefers Sleeper's `state/nfl` endpoint and falls back to `src/utils/nflWeek.ts` if the Sleeper request fails.
+The week badge uses Sleeper's `state/nfl` endpoint. If Sleeper state is unavailable, the dashboard shows `Week TBD`.
 
 ## Data Sources
 
 - [Sleeper API documentation](https://docs.sleeper.com/#introduction): primary reference for league, roster, draft, player, trending, transaction, matchup, and NFL state endpoints.
+- ESPN NFL scoreboard API: schedule-derived source for team bye weeks, applied to Sleeper players by team.
 
 ## Module Structure
 
