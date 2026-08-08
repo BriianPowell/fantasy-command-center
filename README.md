@@ -23,6 +23,8 @@ npm install
 npm run dev
 ```
 
+The npm `allowScripts` entries in `package.json` are limited to optional native dependency helpers currently resolved in `package-lock.json`.
+
 Build locally for GitHub Pages:
 
 ```sh
