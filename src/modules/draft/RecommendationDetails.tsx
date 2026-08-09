@@ -26,6 +26,12 @@ export function RecommendationDetails({
         {recommendation.positionRank ? (
           <span>Position rank #{recommendation.positionRank}</span>
         ) : null}
+        {recommendation.tierPlayersRemaining ? (
+          <span>Tier left {recommendation.tierPlayersRemaining}</span>
+        ) : null}
+        {recommendation.picksUntilNextPick !== undefined ? (
+          <span>Next turn {recommendation.picksUntilNextPick} picks</span>
+        ) : null}
         {recommendation.dropOffAfter !== undefined &&
         recommendation.dropOffAfter >= 4 ? (
           <span>

@@ -17,6 +17,7 @@ export interface TeamValueSnapshot {
   latestPickValue?: number
   starterBenchDelta: number
   starterValue: number
+  taxiValue: number
   totalValue: number
 }
 
@@ -36,25 +37,37 @@ export interface PositionValueGap {
   valueDelta: number
 }
 
+export const POSITION_VALUE_GAP_THRESHOLD = -5
+
+export function isPositionWeakSpot(gap: PositionValueGap): boolean {
+  return (
+    gap.filledStarters < gap.requiredStarters ||
+    Math.round(gap.valueDelta) <= POSITION_VALUE_GAP_THRESHOLD
+  )
+}
+
 export function buildTeamValueSnapshot({
   bench,
   draftedAdditions,
   lineupSlots,
   picks,
   players,
+  taxi = [],
 }: {
   bench: TeamTrackerPlayer[]
   draftedAdditions: TeamTrackerPlayer[]
   lineupSlots: TeamTrackerLineupSlot[]
   picks: DraftPick[]
   players: Player[]
+  taxi?: TeamTrackerPlayer[]
 }): TeamValueSnapshot {
   const starters = lineupSlots.flatMap((slot) =>
     slot.player ? [slot.player] : []
   )
-  const rosterPlayers = [...starters, ...bench]
+  const rosterPlayers = [...starters, ...bench, ...taxi]
   const starterValue = sumPlayerValues(starters)
   const benchValue = sumPlayerValues(bench)
+  const taxiValue = sumPlayerValues(taxi)
   const totalValue = sumPlayerValues(rosterPlayers)
   const averageValue = rosterPlayers.length
     ? totalValue / rosterPlayers.length
@@ -78,6 +91,7 @@ export function buildTeamValueSnapshot({
     latestPickValue,
     starterBenchDelta: starterValue - benchValue,
     starterValue,
+    taxiValue,
     totalValue,
   }
 }

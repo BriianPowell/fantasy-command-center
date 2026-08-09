@@ -57,6 +57,10 @@ export class SleeperProvider {
     return normalizeDraft(draft, picks)
   }
 
+  async refreshDraftState(draftId: string): Promise<DraftState> {
+    return this.loadDraft(draftId)
+  }
+
   async loadNflState(): Promise<NflState> {
     const state = await this.api.fetchNflState()
 

@@ -26,6 +26,7 @@ export interface SleeperRoster {
   owner_id?: string
   players?: string[]
   starters?: string[]
+  taxi?: string[]
 }
 
 export interface SleeperNflState {

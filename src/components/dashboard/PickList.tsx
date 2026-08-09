@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { type ReactNode, useEffect, useRef } from 'react'
 import { sortDraftPicks } from '../../domain/draftPickUtils'
 import type { DraftPick, Player } from '../../domain/types'
 import {
@@ -8,6 +8,7 @@ import {
 
 export function PickList({
   autoScrollToEnd = false,
+  headerAccessory,
   picks,
   players = [],
   tileDensity = 'default',
@@ -15,6 +16,7 @@ export function PickList({
   tone = 'pick',
 }: {
   autoScrollToEnd?: boolean
+  headerAccessory?: ReactNode
   picks: DraftPick[]
   players?: Player[]
   tileDensity?: 'default' | 'compact'
@@ -35,7 +37,10 @@ export function PickList({
 
   return (
     <div>
-      <h3>{title}</h3>
+      <div className="pick-list-header">
+        <h3>{title}</h3>
+        {headerAccessory}
+      </div>
       <div
         className={
           autoScrollToEnd ? 'pick-list compact scrollable' : 'pick-list compact'

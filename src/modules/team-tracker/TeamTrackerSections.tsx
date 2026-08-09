@@ -1,16 +1,17 @@
+import { TeamPlayerRow } from './TeamPlayerInsight'
 import type {
   TeamTrackerLineupSlot,
   TeamTrackerPlayer,
 } from './teamTrackerModel'
-import type { PositionValueGap, TeamPickValueImpact } from './teamValueModel'
+import {
+  isPositionWeakSpot,
+  type PositionValueGap,
+  type TeamPickValueImpact,
+} from './teamValueModel'
 import { DraftPickReferenceTile } from '../../components/player/DraftPickReferenceTile'
-import { getSleeperPlayerImageUrl } from '../../components/player/playerAssets'
 import { PlayerReferenceTile } from '../../components/player/PlayerReferenceTile'
 import { SlotBadge } from '../../components/player/SlotBadge'
-import {
-  formatDraftValueScore,
-  scoreDraftPlayerValue,
-} from '../../domain/playerValueUtils'
+import { formatDraftValueScore } from '../../domain/playerValueUtils'
 import type { DraftPick, Player } from '../../domain/types'
 
 export function TrackerMetric({
@@ -29,11 +30,21 @@ export function TrackerMetric({
 }
 
 export function LineupSection({
+  baselineValue,
+  onClosePlayerInsight,
+  onPlayerSelect,
+  selectedPlayerId,
   slots,
   title,
+  weakPositions,
 }: {
+  baselineValue: number
+  onClosePlayerInsight?: () => void
+  onPlayerSelect?: (playerId: string) => void
+  selectedPlayerId?: string
   slots: TeamTrackerLineupSlot[]
   title: string
+  weakPositions: Set<TeamTrackerPlayer['primaryPosition']>
 }) {
   const filledSlots = slots.filter((slot) => slot.player).length
 
@@ -49,7 +60,16 @@ export function LineupSection({
         {slots.map((slot) =>
           slot.player ? (
             <div className="team-lineup-slot filled" key={slot.id}>
-              <TeamPlayerRow player={slot.player} slotLabel={slot.slot} />
+              <TeamPlayerRow
+                isSelected={selectedPlayerId === slot.player.id}
+                baselineValue={baselineValue}
+                isWeakSpot={weakPositions.has(slot.player.primaryPosition)}
+                onCloseInsight={onClosePlayerInsight}
+                onSelect={onPlayerSelect}
+                player={slot.player}
+                roleLabel={`Starter ${slot.slot}`}
+                slotLabel={slot.slot}
+              />
             </div>
           ) : (
             <div className="team-lineup-slot empty" key={slot.id}>
@@ -63,13 +83,27 @@ export function LineupSection({
 }
 
 export function RosterSection({
+  baselineValue,
   emptyText,
+  insightSide = 'right',
+  onClosePlayerInsight,
+  onPlayerSelect,
   players,
+  roleLabel = 'Bench',
+  selectedPlayerId,
   title,
+  weakPositions,
 }: {
+  baselineValue: number
   emptyText: string
+  insightSide?: 'left' | 'right'
+  onClosePlayerInsight?: () => void
+  onPlayerSelect?: (playerId: string) => void
   players: TeamTrackerPlayer[]
+  roleLabel?: string
+  selectedPlayerId?: string
   title: string
+  weakPositions: Set<TeamTrackerPlayer['primaryPosition']>
 }) {
   return (
     <section className="team-roster-section">
@@ -80,7 +114,17 @@ export function RosterSection({
       <div className="team-player-list">
         {players.length ? (
           players.map((player) => (
-            <TeamPlayerRow key={player.id} player={player} />
+            <TeamPlayerRow
+              baselineValue={baselineValue}
+              insightSide={insightSide}
+              isWeakSpot={weakPositions.has(player.primaryPosition)}
+              isSelected={selectedPlayerId === player.id}
+              key={player.id}
+              onCloseInsight={onClosePlayerInsight}
+              onSelect={onPlayerSelect}
+              player={player}
+              roleLabel={player.isDraftAddition ? 'Draft addition' : roleLabel}
+            />
           ))
         ) : (
           <p>{emptyText}</p>
@@ -90,38 +134,50 @@ export function RosterSection({
   )
 }
 
-export function PositionValueGapsSection({
-  gaps,
-}: {
-  gaps: PositionValueGap[]
-}) {
+export function PositionNeedsSummary({ gaps }: { gaps: PositionValueGap[] }) {
+  const weakSpots = gaps.filter(isPositionWeakSpot)
+
   return (
-    <section className="team-roster-section">
-      <header>
-        <h3>Position Gaps</h3>
-        <span>{gaps.length}</span>
-      </header>
-      <div className="position-gap-list">
-        {gaps.map((gap) => (
-          <div
-            className={
-              gap.filledStarters < gap.requiredStarters
-                ? 'position-gap-row needs-attention'
-                : 'position-gap-row'
-            }
+    <div className="team-needs-summary" aria-label="Position weak spots">
+      <span className="team-needs-label">Weak spots</span>
+      <span
+        aria-label="Weak spot gap help"
+        className="team-needs-help"
+        data-tooltip="Gap compares a position's average player value against your roster average. Negative means that position trails your roster baseline; positive means it is ahead."
+        tabIndex={0}
+      >
+        ?
+      </span>
+      {weakSpots.length ? (
+        weakSpots.map((gap) => (
+          <span
+            className="position-need-chip"
+            data-tooltip={formatPositionGapTooltip(gap)}
             key={gap.position}
+            tabIndex={0}
           >
             <strong>{gap.position}</strong>
             <span>
-              {gap.filledStarters}/{gap.requiredStarters} starters
+              {gap.filledStarters}/{gap.requiredStarters}
             </span>
-            <span>Avg {formatDraftValueScore(gap.averageValue)}</span>
             <span>Gap {formatDraftValueScore(gap.valueDelta)}</span>
-          </div>
-        ))}
-      </div>
-    </section>
+          </span>
+        ))
+      ) : (
+        <span className="team-needs-empty">No clear gaps</span>
+      )}
+    </div>
   )
+}
+
+function formatPositionGapTooltip(gap: PositionValueGap): string {
+  const rosterAverage = gap.averageValue - gap.valueDelta
+  const starterFill =
+    gap.filledStarters < gap.requiredStarters
+      ? ` Starter fill is ${gap.filledStarters}/${gap.requiredStarters}.`
+      : ''
+
+  return `${gap.position} average value is ${Math.round(gap.averageValue)} versus a roster average of ${Math.round(rosterAverage)}. Gap ${formatDraftValueScore(gap.valueDelta)} means this position is ${gap.valueDelta < 0 ? 'behind' : 'ahead of'} your roster baseline.${starterFill}`
 }
 
 export function RecentTeamPicksSection({
@@ -175,37 +231,6 @@ function EmptyLineupSlot({ slotLabel }: { slotLabel: string }) {
       leadingLabel={<SlotBadge slotLabel={slotLabel} />}
       meta={[]}
       playerName={<span className="empty-slot-placeholder" />}
-    />
-  )
-}
-
-function TeamPlayerRow({
-  player,
-  slotLabel,
-}: {
-  player: TeamTrackerPlayer
-  slotLabel?: string
-}) {
-  const valueScore = formatDraftValueScore(scoreDraftPlayerValue(player.player))
-
-  return (
-    <PlayerReferenceTile
-      avatarUrl={getSleeperPlayerImageUrl(player.player)}
-      className={
-        player.isDraftAddition
-          ? 'team-player-row draft-addition'
-          : 'team-player-row'
-      }
-      leadingLabel={
-        <SlotBadge slotLabel={slotLabel ?? player.primaryPosition} />
-      }
-      meta={[
-        player.player.team ?? 'FA',
-        ...(player.player.byeWeek ? [`Bye ${player.player.byeWeek}`] : []),
-        `Value ${valueScore}`,
-        ...(player.isDraftAddition ? ['Draft addition'] : []),
-      ]}
-      playerName={player.player.fullName}
     />
   )
 }

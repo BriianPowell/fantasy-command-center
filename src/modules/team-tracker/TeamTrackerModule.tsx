@@ -1,7 +1,8 @@
+import { useState } from 'react'
 import { buildTeamTrackerViewModel } from './teamTrackerModel'
 import {
   LineupSection,
-  PositionValueGapsSection,
+  PositionNeedsSummary,
   RecentTeamPicksSection,
   RosterSection,
   TrackerMetric,
@@ -12,6 +13,7 @@ import {
   buildTeamValueSnapshot,
   formatTeamValue,
   formatTeamValueDelta,
+  isPositionWeakSpot,
 } from './teamValueModel'
 import './teamTracker.css'
 import { ModuleTrimToggle } from '../../components/dashboard/ModuleTrimToggle'
@@ -33,6 +35,7 @@ export function TeamTrackerModule({
   roster,
   selectedTeamId,
 }: TeamTrackerModuleProps) {
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | undefined>()
   const selectedTeam = data.teams.find((team) => team.id === selectedTeamId)
   const teamPicks = getRecentDraftPicks(data.draft?.picks ?? [], {
     limit: 6,
@@ -52,6 +55,7 @@ export function TeamTrackerModule({
     lineupSlots: tracker.lineupSlots,
     picks: teamPicks,
     players: data.players,
+    taxi: tracker.taxi,
   })
   const positionValueGaps = buildPositionValueGaps({
     bench: tracker.bench,
@@ -59,9 +63,7 @@ export function TeamTrackerModule({
   })
   const weakPositions = new Set(
     positionValueGaps.flatMap((gap) =>
-      gap.filledStarters < gap.requiredStarters || gap.valueDelta < 0
-        ? [gap.position]
-        : []
+      isPositionWeakSpot(gap) ? [gap.position] : []
     )
   )
   const pickValueImpacts = buildTeamPickValueImpacts({
@@ -70,13 +72,20 @@ export function TeamTrackerModule({
     players: data.players,
     weakPositions,
   })
+  function toggleSelectedPlayer(playerId: string) {
+    setSelectedPlayerId((current) =>
+      current === playerId ? undefined : playerId
+    )
+  }
 
   return (
     <section
       className={
         isMinimized
           ? 'panel team-tracker-panel module-is-minimized'
-          : 'panel team-tracker-panel'
+          : selectedPlayerId
+            ? 'panel team-tracker-panel has-player-insight'
+            : 'panel team-tracker-panel'
       }
     >
       <ModuleTrimToggle
@@ -92,49 +101,86 @@ export function TeamTrackerModule({
             {data.league.season} season
           </p>
         </div>
-        <div className="team-tracker-summary">
-          <TrackerMetric label="Scoring" value={scoringLabel} />
-          <TrackerMetric
-            label="Team value"
-            value={formatTeamValue(teamValue.totalValue)}
-          />
-          <TrackerMetric
-            label="Starter value"
-            value={formatTeamValue(teamValue.starterValue)}
-          />
-          <TrackerMetric
-            label="Bench value"
-            value={formatTeamValue(teamValue.benchValue)}
-          />
-          <TrackerMetric
-            label="Starter edge"
-            value={formatTeamValueDelta(teamValue.starterBenchDelta)}
-          />
-          <TrackerMetric
-            label="Draft value"
-            value={formatTeamValue(teamValue.draftedAdditionsValue)}
-          />
-          <TrackerMetric
-            label="Last pick"
-            value={formatTeamValueDelta(teamValue.latestPickDelta)}
-          />
+        <div className="team-tracker-summary-stack">
+          <div className="team-tracker-summary">
+            <TrackerMetric label="Scoring" value={scoringLabel} />
+            <TrackerMetric
+              label="Team value"
+              value={formatTeamValue(teamValue.totalValue)}
+            />
+            <TrackerMetric
+              label="Starter value"
+              value={formatTeamValue(teamValue.starterValue)}
+            />
+            <TrackerMetric
+              label="Bench value"
+              value={formatTeamValue(teamValue.benchValue)}
+            />
+            <TrackerMetric
+              label="Starter edge"
+              value={formatTeamValueDelta(teamValue.starterBenchDelta)}
+            />
+            <TrackerMetric
+              label="Draft value"
+              value={formatTeamValue(teamValue.draftedAdditionsValue)}
+            />
+            <TrackerMetric
+              label="Last pick"
+              value={formatTeamValueDelta(teamValue.latestPickDelta)}
+            />
+          </div>
+          <PositionNeedsSummary gaps={positionValueGaps} />
         </div>
       </div>
 
       {!isMinimized ? (
         <div className="team-roster-grid">
-          <LineupSection slots={tracker.lineupSlots} title="Starters" />
+          <LineupSection
+            baselineValue={teamValue.averageValue}
+            onClosePlayerInsight={() => setSelectedPlayerId(undefined)}
+            onPlayerSelect={toggleSelectedPlayer}
+            selectedPlayerId={selectedPlayerId}
+            slots={tracker.lineupSlots}
+            title="Starters"
+            weakPositions={weakPositions}
+          />
           <RosterSection
+            baselineValue={teamValue.averageValue}
             emptyText="No bench players mapped yet."
+            onClosePlayerInsight={() => setSelectedPlayerId(undefined)}
+            onPlayerSelect={toggleSelectedPlayer}
             players={tracker.bench}
+            selectedPlayerId={selectedPlayerId}
             title="Bench"
+            weakPositions={weakPositions}
           />
-          <PositionValueGapsSection gaps={positionValueGaps} />
-          <RecentTeamPicksSection
-            pickValueImpacts={pickValueImpacts}
-            picks={teamPicks}
-            players={data.players}
-          />
+          <div
+            className={
+              tracker.taxi.length
+                ? 'team-roster-side-stack has-taxi'
+                : 'team-roster-side-stack'
+            }
+          >
+            {tracker.taxi.length ? (
+              <RosterSection
+                baselineValue={teamValue.averageValue}
+                emptyText="No taxi squad players mapped yet."
+                insightSide="left"
+                onClosePlayerInsight={() => setSelectedPlayerId(undefined)}
+                onPlayerSelect={toggleSelectedPlayer}
+                players={tracker.taxi}
+                roleLabel="Taxi Squad"
+                selectedPlayerId={selectedPlayerId}
+                title="Taxi Squad"
+                weakPositions={weakPositions}
+              />
+            ) : null}
+            <RecentTeamPicksSection
+              pickValueImpacts={pickValueImpacts}
+              picks={teamPicks}
+              players={data.players}
+            />
+          </div>
         </div>
       ) : null}
     </section>

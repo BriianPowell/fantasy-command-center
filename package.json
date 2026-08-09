@@ -1,7 +1,7 @@
 {
   "name": "fantasy-command-center",
   "private": true,
-  "version": "0.2.0",
+  "version": "1.0.0",
   "type": "module",
   "homepage": "https://briianpowell.github.io/fantasy-command-center/",
   "scripts": {

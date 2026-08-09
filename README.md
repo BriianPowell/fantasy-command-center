@@ -1,16 +1,18 @@
 # Fantasy Command Center
 
-A hosted fantasy football command center for Sleeper draft-day decisions, centered on your teams, roster context, and draft-room recommendations.
+A hosted fantasy football command center for Sleeper draft-day decisions, centered on your teams, roster context, live draft flow, and actionable recommendations.
 
-## Current Features
+## 1.0 Feature Set
+
+Fantasy Command Center 1.0 focuses on two production-ready dashboard modules: Team Tracker and Draft Room.
 
 - GitHub Pages-ready React + TypeScript + Vite app.
 - Multi-league Sleeper dashboards seeded with your league IDs.
 - Configured Sleeper usernames so each league focuses on your team.
 - Normalized league, roster, player, and draft models.
-- Team Tracker module with starters, bench, recent team picks, bye weeks, and value context.
-- Sleeper-style Draft Room module with position columns, shared player tiles, top targets, and latest picks.
-- Sleeper provider coverage for NFL state, matchups, transactions, traded picks, trending players, drafts, rosters, users, leagues, and player metadata.
+- Team Tracker module with starters, bench, recent team picks, bye weeks, team value, weak spots, draft impact, and click-to-open roster player insights.
+- Sleeper-style Draft Room module with dynamic position columns, shared player tiles, top targets, latest picks, live draft sync, tier urgency, scarcity, roster fit, and recommendation explanations.
+- Sleeper provider coverage for NFL state, drafts, rosters, users, leagues, and player metadata used by the current dashboards.
 - Built-in draft analysis defaults for team point engines, depth charts, player contribution, and rising usage.
 - Plain-CSS glass, gradient, glow, and spotlight-style dashboard elements.
 
@@ -40,6 +42,7 @@ Before merging changes to `main`:
 - Keep work grouped by GitHub issue when possible.
 - Run `npm install` after dependency changes and review `package-lock.json` for expected churn.
 - Run `npm run lint`, `npm run test`, and `npm run build` locally.
+- Confirm active-draft refresh behavior from the Draft Room `Phase` chip if touching live draft sync.
 - Confirm the GitHub Pages workflow passes after the merge.
 
 Manual deploys through the `gh-pages` package are still available:
@@ -64,7 +67,9 @@ export const fantasyConfig = {
 } as const
 ```
 
-Configured leagues auto-load when the site opens. The main layout is a command center shell with top-bar tabs for each league and a read-only NFL state badge. League, roster, and draft data load first; the larger Sleeper player pool fills in afterward for draft recommendations. The Sleeper provider also exposes lazy methods for NFL state, matchups, transactions, traded picks, and trending players as later modules need them. Each selected league dashboard currently focuses on the Team Tracker and Draft Room modules. When one of the configured usernames owns a team in a league, the dashboard narrows to that team.
+Configured leagues auto-load when the site opens. The main layout is a command center shell with top-bar tabs for each league and a read-only NFL state badge. League, roster, and draft data load first; the larger Sleeper player pool fills in afterward for draft recommendations. Each selected league dashboard focuses on the Team Tracker and Draft Room modules. When one of the configured usernames owns a team in a league, the dashboard narrows to that team.
+
+When Sleeper marks a draft as active, the Draft Room can refresh draft metadata and picks without reloading the full player pool. The `Phase` chip can manually check Sleeper for draft status before polling begins; completed drafts render the chip as read-only.
 
 The week badge uses Sleeper's `state/nfl` endpoint. If Sleeper state is unavailable, the dashboard shows `Week TBD`.
 
@@ -75,8 +80,8 @@ The week badge uses Sleeper's `state/nfl` endpoint. If Sleeper state is unavaila
 
 ## Module Structure
 
-- `src/modules/draft/DraftPickHelperModule.tsx`: Sleeper-style draft room grouped by position, with best available targets and latest picks.
-- `src/modules/team-tracker/TeamTrackerModule.tsx`: selected-team roster tracker with starters, bench, and recent team picks.
+- `src/modules/draft/DraftPickHelperModule.tsx`: Sleeper-style draft room grouped by position, with best available targets, latest picks, live sync status, and recommendation details.
+- `src/modules/team-tracker/TeamTrackerModule.tsx`: selected-team roster tracker with starters, bench, recent team picks, weak spots, value metrics, and click-to-open player insights.
 - `src/components/dashboard/`: shared UI primitives used across modules.
 
 ## UI Direction
@@ -84,14 +89,6 @@ The week badge uses Sleeper's `state/nfl` endpoint. If Sleeper state is unavaila
 The current UI uses plain CSS for glass panels, gradient borders, radial glows, dark dashboard surfaces, and hover spotlight cards.
 
 Dashboard styling should stay on the plain-CSS path for now. Shared colors, borders, surfaces, chips, and muted text should use tokens in `src/styles.css`; module CSS should focus on layout and module-specific composition.
-
-## Open Source Inspiration
-
-- [Sleeper Draft Assistant](https://github.com/itsreverence/sleeper-draft-assistant): local-first Sleeper draft assistant with deterministic recommendation evidence, roster construction, scarcity, ADP, tiers, and CSV imports.
-- [Fantasy Football Analyzer](https://github.com/Krool/FantasyFootballAnalyzer): static-site-friendly draft and league analysis ideas, including draft grades, points-left-on-board, rankings, and live Sleeper sync.
-- [Draft Assist App](https://github.com/PreferencePopular821/draftassistapp/): simple browser draft board with CSV rankings, recent picks, manual drafted tracking, and tier breaks.
-- [Fantasy Football Manager](https://github.com/kbains09/FantasyManager): VORP-style free agent and trade recommendations that could inspire our pickup scoring.
-- [Fantasy Sports Toolkit](https://github.com/michaelfromyeg/fantasy-sports-toolkit): reusable lineup and waiver logic ideas that can be adapted to Sleeper data.
 
 ## Draft Analysis Defaults
 
@@ -101,28 +98,5 @@ It currently uses:
 
 - Inferred depth charts by team and position from Sleeper player metadata.
 - Built-in weighting preferences for team point engines, depth chart upside, player contribution, and rising usage.
-- Optional team opportunity profiles for team point engines, player contribution share, opportunity share, red zone share, and usage trends when stronger defaults are added.
 
-The app infers depth charts from Sleeper player metadata. Built-in team profiles can be added to `src/strategy/teamOpportunity.ts` where stronger defaults or better data are available.
-
-Example team profile:
-
-```ts
-DET: {
-  team: "DET",
-  label: "Run game creates RB value",
-  positions: {
-    RB: {
-      fantasyPointShare: 0.34,
-      opportunityGrade: 0.9,
-      depthChart: [
-        { playerName: "Jahmyr Gibbs", rank: 1, role: "explosive starter" },
-        { playerName: "David Montgomery", rank: 2, role: "goal-line / early-down" }
-      ],
-      playerContributions: [{ playerName: "Jahmyr Gibbs", fantasyPointShare: 0.22, trend: "rising" }]
-    }
-  }
-}
-```
-
-Draft recommendations use these defaults as a context layer. Tune the built-in profiles over time as the player synthesis gets richer.
+Draft recommendations use these defaults as a context layer alongside player value, roster fit, tier urgency, scarcity, bye risk, and manual notes.

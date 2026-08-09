@@ -19,6 +19,7 @@ import type {
   LeagueDraftMode,
 } from '../../domain/draftBoardMode'
 import { getDraftPicksForRoster } from '../../domain/draftPickUtils'
+import type { DraftSyncStatus } from '../../domain/draftSync'
 import type {
   DraftRecommendation,
   NormalizedLeagueData,
@@ -30,7 +31,9 @@ export interface DraftPickHelperModuleProps {
   boardMode: DraftBoardMode
   data: NormalizedLeagueData
   draftMode: LeagueDraftMode
+  draftSyncStatus?: DraftSyncStatus
   isMinimized: boolean
+  onRefreshDraftStatus?: () => void
   onToggleMinimized: () => void
   recommendations: DraftRecommendation[]
   selectedTeamId: string
@@ -40,7 +43,9 @@ export function DraftPickHelperModule({
   boardMode,
   data,
   draftMode,
+  draftSyncStatus,
   isMinimized,
+  onRefreshDraftStatus,
   onToggleMinimized,
   recommendations,
   selectedTeamId,
@@ -55,6 +60,8 @@ export function DraftPickHelperModule({
   const picks = data.draft?.picks ?? []
   const myPicks = getDraftPicksForRoster(picks, selectedTeamId)
   const availablePlayerCount = recommendations.length
+  const canRefreshDraftStatus =
+    data.draft?.status !== 'complete' && Boolean(onRefreshDraftStatus)
   const bestAvailable = [...recommendations]
     .sort((a, b) => b.score - a.score)
     .slice(0, 5)
@@ -83,6 +90,15 @@ export function DraftPickHelperModule({
             <div className="draft-room-status">
               <StatusChip
                 label="Phase"
+                disabled={draftSyncStatus?.state === 'syncing'}
+                onClick={
+                  canRefreshDraftStatus ? onRefreshDraftStatus : undefined
+                }
+                title={
+                  canRefreshDraftStatus
+                    ? 'Check Sleeper draft status'
+                    : undefined
+                }
                 value={formatDraftStatus(data.draft?.status)}
               />
               <StatusChip
@@ -114,6 +130,14 @@ export function DraftPickHelperModule({
           <aside className="draft-latest-picks">
             <PickList
               autoScrollToEnd
+              headerAccessory={
+                draftSyncStatus ? (
+                  <StatusChip
+                    label="Sync"
+                    value={formatDraftSyncStatus(draftSyncStatus)}
+                  />
+                ) : null
+              }
               title="Latest Picks"
               picks={picks}
               players={data.players}
@@ -148,4 +172,23 @@ export function DraftPickHelperModule({
       ) : null}
     </section>
   )
+}
+
+function formatDraftSyncStatus(status: DraftSyncStatus): string {
+  if (status.state === 'syncing') {
+    return 'Refreshing'
+  }
+
+  if (status.state === 'error') {
+    return 'Sync failed'
+  }
+
+  if (status.lastUpdatedAt) {
+    return `Updated ${new Date(status.lastUpdatedAt).toLocaleTimeString([], {
+      hour: 'numeric',
+      minute: '2-digit',
+    })}`
+  }
+
+  return 'Live'
 }

@@ -1,4 +1,10 @@
 import {
+  type DraftTimingContext,
+  getDraftTimingContext,
+  getTierUrgency,
+  type TierUrgency,
+} from './draftTimingContext'
+import {
   defaultDraftBoardMode,
   shouldIncludePlayerInDraftBoard,
 } from '../domain/draftBoardMode'
@@ -15,6 +21,7 @@ import {
 } from '../domain/positionUtils'
 import type {
   DraftRecommendation,
+  DraftState,
   LeagueSettings,
   Player,
   PlayerNote,
@@ -44,7 +51,9 @@ interface RosterFit {
 
 export interface DraftRecommendationInput {
   boardMode?: DraftBoardMode
+  draft?: DraftState
   players: Player[]
+  selectedTeamId?: string
   unavailablePlayerIds: Set<string>
   roster?: Roster
   leagueSettings: LeagueSettings
@@ -154,19 +163,24 @@ export function buildDraftRecommendations(
     }
   })
 
-  return addAvailablePlayerContext(recommendations).sort(
-    (a, b) => b.score - a.score
-  )
+  return addAvailablePlayerContext(
+    recommendations,
+    getDraftTimingContext(input)
+  ).sort((a, b) => b.score - a.score)
 }
 
 interface AvailablePlayerContext {
   dropOffAfter?: number
+  picksUntilNextPick?: number
   positionRank: number
+  tierPlayersRemaining: number
+  tierUrgency?: TierUrgency
   valueTier: number
 }
 
 function addAvailablePlayerContext(
-  recommendations: DraftRecommendation[]
+  recommendations: DraftRecommendation[],
+  draftTimingContext: DraftTimingContext
 ): DraftRecommendation[] {
   const contextsByPlayerId = new Map<string, AvailablePlayerContext>()
   const recommendationsByPosition = new Map<Position, DraftRecommendation[]>()
@@ -188,6 +202,11 @@ function addAvailablePlayerContext(
     const sortedRecommendations = [...positionRecommendations].sort(
       (a, b) => b.valueScore - a.valueScore
     )
+    const positionContexts: {
+      context: AvailablePlayerContext
+      playerId: string
+    }[] = []
+    const tierCounts = new Map<number, number>()
     let valueTier = 1
     let previousValue = sortedRecommendations[0]?.valueScore
 
@@ -204,13 +223,33 @@ function addAvailablePlayerContext(
       const dropOffAfter = nextRecommendation
         ? recommendation.valueScore - nextRecommendation.valueScore
         : undefined
-
-      contextsByPlayerId.set(recommendation.player.id, {
+      const context = {
         ...(dropOffAfter !== undefined ? { dropOffAfter } : {}),
+        ...draftTimingContext,
         positionRank: index + 1,
+        tierPlayersRemaining: 0,
         valueTier,
+      }
+
+      positionContexts.push({
+        context,
+        playerId: recommendation.player.id,
       })
+      tierCounts.set(valueTier, (tierCounts.get(valueTier) ?? 0) + 1)
       previousValue = recommendation.valueScore
+    })
+
+    positionContexts.forEach(({ context, playerId }) => {
+      const tierPlayersRemaining = tierCounts.get(context.valueTier) ?? 1
+
+      contextsByPlayerId.set(playerId, {
+        ...context,
+        tierPlayersRemaining,
+        tierUrgency: getTierUrgency({
+          ...context,
+          tierPlayersRemaining,
+        }),
+      })
     })
   }
 
@@ -225,10 +264,7 @@ function addAvailablePlayerContext(
       ...recommendation,
       ...context,
       insight: buildContextualRecommendationInsight(recommendation, context),
-      notes: [
-        ...recommendation.notes,
-        ...buildAvailableContextNotes(recommendation, context),
-      ],
+      notes: recommendation.notes,
       suggestion: buildContextualPickSuggestion(recommendation, context),
     }
   })
@@ -239,6 +275,14 @@ function buildContextualRecommendationInsight(
   context: AvailablePlayerContext
 ): string {
   const position = getPrimaryPosition(recommendation.player.positions)
+
+  if (position && context.tierUrgency === 'take_now') {
+    return `${recommendation.insight} Only ${context.tierPlayersRemaining} ${position} option${context.tierPlayersRemaining === 1 ? '' : 's'} remain in this value tier, and your next pick is estimated ${context.picksUntilNextPick} picks away.`
+  }
+
+  if (position && context.tierUrgency === 'safe_to_wait') {
+    return `${recommendation.insight} This ${position} tier has enough similar options left that you may be able to wait.`
+  }
 
   if (
     position &&
@@ -261,6 +305,14 @@ function buildContextualPickSuggestion(
   recommendation: DraftRecommendation,
   context: AvailablePlayerContext
 ): string {
+  if (context.tierUrgency === 'take_now') {
+    return 'Take now: tier may not return'
+  }
+
+  if (context.tierUrgency === 'safe_to_wait') {
+    return 'Safe to wait'
+  }
+
   if (
     context.valueTier === 1 &&
     context.dropOffAfter !== undefined &&
@@ -270,30 +322,6 @@ function buildContextualPickSuggestion(
   }
 
   return recommendation.suggestion
-}
-
-function buildAvailableContextNotes(
-  recommendation: DraftRecommendation,
-  context: AvailablePlayerContext
-): string[] {
-  const position = getPrimaryPosition(recommendation.player.positions)
-  if (!position) {
-    return []
-  }
-
-  const notes = [`Tier ${context.valueTier} ${position} value`]
-
-  if (context.positionRank <= 3) {
-    notes.push(`#${context.positionRank} available ${position}`)
-  }
-
-  if (context.dropOffAfter !== undefined && context.dropOffAfter >= 8) {
-    notes.push(
-      `Next ${position} value drops ${Math.round(context.dropOffAfter)} points`
-    )
-  }
-
-  return notes
 }
 
 function getDraftCandidates(
@@ -547,14 +575,6 @@ function buildRecommendationNotes(
 
   if (projection) {
     notes.push(`${projection.projectedPoints.toFixed(1)} projected points`)
-  }
-
-  if (needScore >= 25) {
-    notes.push(`Fills a starting ${getPrimaryPosition(player.positions)} need`)
-  } else if (rosterFit && rosterFit.currentDepth < rosterFit.targetDepth) {
-    notes.push(
-      `${rosterFit.currentDepth}/${rosterFit.targetDepth} target ${rosterFit.primaryPosition} depth`
-    )
   }
 
   if (scarcityScore >= 14) {

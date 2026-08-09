@@ -15,6 +15,7 @@ import {
   buildDraftAwareRoster,
   getDraftedPlayerIds,
 } from '../../domain/draftPickUtils'
+import type { DraftSyncStatus } from '../../domain/draftSync'
 import type { NormalizedLeagueData } from '../../domain/types'
 import { DraftPickHelperModule } from '../../modules/draft'
 import { TeamTrackerModule } from '../../modules/team-tracker/TeamTrackerModule'
@@ -22,13 +23,17 @@ import { buildStrategyContext } from '../../strategy/teamOpportunity'
 
 export interface LeagueDashboardProps {
   data: NormalizedLeagueData
+  draftSyncStatus?: DraftSyncStatus
   minimizedModules: Record<DashboardModuleId, boolean>
+  onRefreshDraftStatus?: () => void
   onToggleModule: (moduleId: DashboardModuleId) => void
 }
 
 export function LeagueDashboard({
   data,
+  draftSyncStatus,
   minimizedModules,
+  onRefreshDraftStatus,
   onToggleModule,
 }: LeagueDashboardProps) {
   const selectedTeamId = resolveSelectedTeamId(data)
@@ -64,7 +69,9 @@ export function LeagueDashboard({
   const recommendations = useMemo(() => {
     return buildDraftRecommendations({
       boardMode: draftBoardContext.boardMode,
+      draft: data.draft,
       players: data.players,
+      selectedTeamId,
       unavailablePlayerIds,
       roster: selectedRoster,
       leagueSettings: data.league.settings,
@@ -76,7 +83,9 @@ export function LeagueDashboard({
   }, [
     draftBoardContext.boardMode,
     data.league.settings,
+    data.draft,
     data.players,
+    selectedTeamId,
     selectedRoster,
     strategyContext,
     unavailablePlayerIds,
@@ -95,7 +104,9 @@ export function LeagueDashboard({
         boardMode={draftBoardContext.boardMode}
         data={data}
         draftMode={draftBoardContext.draftMode}
+        draftSyncStatus={draftSyncStatus}
         isMinimized={minimizedModules.draftRoom}
+        onRefreshDraftStatus={onRefreshDraftStatus}
         onToggleMinimized={() => onToggleModule('draftRoom')}
         recommendations={recommendations}
         selectedTeamId={selectedTeamId}

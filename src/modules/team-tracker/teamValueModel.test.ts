@@ -6,6 +6,7 @@ import {
   buildTeamValueSnapshot,
   formatTeamValue,
   formatTeamValueDelta,
+  isPositionWeakSpot,
 } from './teamValueModel'
 import type { Player, Position } from '../../domain/types'
 
@@ -159,6 +160,41 @@ describe('buildPositionValueGaps', () => {
         valueDelta: -12,
       },
     ])
+  })
+})
+
+describe('isPositionWeakSpot', () => {
+  it('flags missing starters and meaningful negative value gaps', () => {
+    expect(
+      isPositionWeakSpot({
+        averageValue: 0,
+        filledStarters: 0,
+        playerCount: 0,
+        position: 'QB',
+        requiredStarters: 1,
+        valueDelta: 0,
+      })
+    ).toBe(true)
+    expect(
+      isPositionWeakSpot({
+        averageValue: 60,
+        filledStarters: 1,
+        playerCount: 1,
+        position: 'TE',
+        requiredStarters: 1,
+        valueDelta: -0.4,
+      })
+    ).toBe(false)
+    expect(
+      isPositionWeakSpot({
+        averageValue: 55,
+        filledStarters: 2,
+        playerCount: 2,
+        position: 'RB',
+        requiredStarters: 2,
+        valueDelta: -5.2,
+      })
+    ).toBe(true)
   })
 })
 

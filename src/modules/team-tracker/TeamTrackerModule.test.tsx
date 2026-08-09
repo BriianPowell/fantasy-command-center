@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { TeamTrackerModule } from './TeamTrackerModule'
 import type { NormalizedLeagueData } from '../../domain/types'
@@ -59,11 +59,19 @@ const leagueData: NormalizedLeagueData = {
       providerPlayerId: 'player-2',
       searchRank: 10,
     },
+    {
+      fullName: 'Taxi Player',
+      id: 'player-3',
+      positions: ['WR'],
+      providerPlayerId: 'player-3',
+      searchRank: 15,
+    },
   ],
   rosters: [
     {
       playerIds: ['player-1'],
       starters: ['player-1'],
+      taxiPlayerIds: ['player-3'],
       teamId: 'team-1',
     },
   ],
@@ -99,11 +107,65 @@ describe('TeamTrackerModule', () => {
     ).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Bench' })).toBeInTheDocument()
     expect(
-      screen.getByRole('heading', { name: 'Position Gaps' })
+      screen.getByRole('heading', { name: 'Taxi Squad' })
     ).toBeInTheDocument()
+    expect(screen.getByText('Taxi Player')).toBeInTheDocument()
+    const weakSpotsSummary = screen.getByLabelText('Position weak spots')
+    expect(within(weakSpotsSummary).getByText('Weak spots')).toBeInTheDocument()
+    expect(within(weakSpotsSummary).getByText('QB')).toBeInTheDocument()
+    expect(
+      within(weakSpotsSummary).getByLabelText('Weak spot gap help')
+    ).toHaveAttribute('data-tooltip', expect.stringContaining('Gap compares'))
+    expect(
+      screen.queryByRole('heading', { name: 'Position Gaps' })
+    ).not.toBeInTheDocument()
     expect(screen.getByText('Starter Player')).toBeInTheDocument()
     expect(screen.getAllByText('Drafted Player').length).toBeGreaterThan(0)
     expect(screen.getByText(/Impact/)).toBeInTheDocument()
     expect(screen.getByText(/Draft total/)).toBeInTheDocument()
+  })
+
+  it('opens roster player insights when a player row is clicked', () => {
+    render(
+      <TeamTrackerModule
+        data={leagueData}
+        isMinimized={false}
+        onToggleMinimized={vi.fn()}
+        roster={leagueData.rosters[0]}
+        selectedTeamId="team-1"
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /Starter Player/ }))
+
+    expect(screen.getByText('Roster Insight')).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Starter Player' })
+    ).toBeInTheDocument()
+    expect(screen.getByText('Starter RB')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+
+    expect(screen.queryByText('Roster Insight')).not.toBeInTheDocument()
+  })
+
+  it('labels taxi squad player insights with the taxi role', () => {
+    render(
+      <TeamTrackerModule
+        data={leagueData}
+        isMinimized={false}
+        onToggleMinimized={vi.fn()}
+        roster={leagueData.rosters[0]}
+        selectedTeamId="team-1"
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /Taxi Player/ }))
+
+    const insightPanel = screen.getByText('Roster Insight').closest('aside')
+    expect(insightPanel).toBeInTheDocument()
+    expect(
+      within(insightPanel as HTMLElement).getByText('Taxi Squad')
+    ).toBeInTheDocument()
   })
 })

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { DraftPickHelperModule } from './DraftPickHelperModule'
 import type {
@@ -103,12 +103,16 @@ const defenseRecommendation: DraftRecommendation = {
 
 describe('DraftPickHelperModule', () => {
   it('renders the draft room, status chips, best available, and board columns', () => {
+    const onRefreshDraftStatus = vi.fn()
+
     render(
       <DraftPickHelperModule
         boardMode="full_pool"
         data={leagueData}
         draftMode="redraft"
+        draftSyncStatus={{ lastUpdatedAt: 1_786_248_000_000, state: 'synced' }}
         isMinimized={false}
+        onRefreshDraftStatus={onRefreshDraftStatus}
         onToggleMinimized={vi.fn()}
         recommendations={[recommendation]}
         selectedTeamId="team-1"
@@ -121,10 +125,23 @@ describe('DraftPickHelperModule', () => {
     expect(screen.getByText('Redraft')).toBeInTheDocument()
     expect(screen.getByText('Full pool')).toBeInTheDocument()
     expect(screen.getByText('Board pool')).toBeInTheDocument()
+    expect(screen.getByText('Sync')).toBeInTheDocument()
+    expect(screen.getByText(/Updated/)).toBeInTheDocument()
     expect(screen.getByText('Best Available')).toBeInTheDocument()
     expect(screen.getAllByText('Recommended Player').length).toBeGreaterThan(0)
     expect(screen.getByText('Latest Picks')).toBeInTheDocument()
     expect(screen.getByText('Picked Player')).toBeInTheDocument()
+
+    const phaseButton = screen.getByText('Drafting').closest('button')
+    expect(phaseButton).toBeInTheDocument()
+
+    if (!phaseButton) {
+      throw new Error('Expected Phase chip to render as a button')
+    }
+
+    fireEvent.click(phaseButton)
+
+    expect(onRefreshDraftStatus).toHaveBeenCalledOnce()
   })
 
   it('does not render columns for positions with no league roster slots', () => {
@@ -148,6 +165,34 @@ describe('DraftPickHelperModule', () => {
     expect(screen.queryByRole('heading', { name: 'K' })).not.toBeInTheDocument()
     expect(
       screen.queryByRole('heading', { name: 'DEF' })
+    ).not.toBeInTheDocument()
+  })
+
+  it('does not make the phase chip clickable for completed drafts', () => {
+    const completeLeagueData: NormalizedLeagueData = {
+      ...leagueData,
+      draft: {
+        ...leagueData.draft!,
+        status: 'complete',
+      },
+    }
+
+    render(
+      <DraftPickHelperModule
+        boardMode="full_pool"
+        data={completeLeagueData}
+        draftMode="redraft"
+        isMinimized={false}
+        onRefreshDraftStatus={vi.fn()}
+        onToggleMinimized={vi.fn()}
+        recommendations={[recommendation]}
+        selectedTeamId="team-1"
+      />
+    )
+
+    expect(screen.getByText('Complete')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /Phase Complete/ })
     ).not.toBeInTheDocument()
   })
 })

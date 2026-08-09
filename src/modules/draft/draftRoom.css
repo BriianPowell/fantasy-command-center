@@ -60,7 +60,21 @@
   color: #f8fafc;
   font-size: 0.9rem;
   letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.draft-latest-picks .pick-list-header {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: space-between;
   margin-bottom: 0.55rem;
+}
+
+.draft-latest-picks .pick-list-header .status-chip {
+  min-height: 26px;
+  padding: 0.28rem 0.58rem;
+  white-space: nowrap;
 }
 
 .draft-latest-picks > div {
@@ -94,6 +108,26 @@
   line-height: 1;
   min-height: 32px;
   padding: 0.38rem 0.72rem;
+}
+
+button.status-chip {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+button.status-chip:hover {
+  border-color: rgba(191, 219, 254, 0.48);
+  color: #e0e7ff;
+}
+
+button.status-chip:focus-visible {
+  outline: 2px solid rgba(96, 165, 250, 0.72);
+  outline-offset: 2px;
+}
+
+button.status-chip:disabled {
+  cursor: progress;
+  opacity: 0.78;
 }
 
 .status-chip.accent {

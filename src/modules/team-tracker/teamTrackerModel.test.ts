@@ -100,4 +100,27 @@ describe('buildTeamTrackerViewModel', () => {
     ])
     expect(viewModel.totalPlayers).toBe(2)
   })
+
+  it('separates taxi squad players from bench players', () => {
+    const starter = makePlayer('starter-rb', 'RB')
+    const benchPlayer = makePlayer('bench-qb', 'QB')
+    const taxiPlayer = makePlayer('taxi-wr', 'WR')
+
+    const viewModel = buildTeamTrackerViewModel({
+      draftPicks: [],
+      leagueSettings,
+      players: [starter, benchPlayer, taxiPlayer],
+      roster: {
+        playerIds: [starter.id, benchPlayer.id],
+        starters: [starter.id],
+        taxiPlayerIds: [taxiPlayer.id],
+        teamId: 'team-1',
+      },
+      selectedTeamId: 'team-1',
+    })
+
+    expect(viewModel.bench.map((player) => player.id)).toEqual([benchPlayer.id])
+    expect(viewModel.taxi.map((player) => player.id)).toEqual([taxiPlayer.id])
+    expect(viewModel.totalPlayers).toBe(3)
+  })
 })

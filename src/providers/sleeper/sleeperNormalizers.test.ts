@@ -3,6 +3,7 @@ import {
   normalizeDraft,
   normalizeLeague,
   normalizePlayer,
+  normalizeRoster,
   normalizeTeams,
   normalizeTransaction,
 } from './sleeperNormalizers'
@@ -41,6 +42,24 @@ describe('normalizeLeague', () => {
         }),
       })
     )
+  })
+})
+
+describe('normalizeRoster', () => {
+  it('normalizes starters, players, and taxi squad player ids', () => {
+    expect(
+      normalizeRoster({
+        players: ['player-1', 'player-2'],
+        roster_id: 1,
+        starters: ['player-1'],
+        taxi: ['player-3'],
+      })
+    ).toEqual({
+      playerIds: ['player-1', 'player-2'],
+      starters: ['player-1'],
+      taxiPlayerIds: ['player-3'],
+      teamId: '1',
+    })
   })
 })
 

@@ -49,6 +49,7 @@ export interface Roster {
   teamId: string
   playerIds: string[]
   starters: string[]
+  taxiPlayerIds?: string[]
 }
 
 export interface NflState {
@@ -157,7 +158,10 @@ export interface DraftRecommendation {
   dropOffAfter?: number
   insight: string
   notes: string[]
+  picksUntilNextPick?: number
   positionRank?: number
+  tierPlayersRemaining?: number
+  tierUrgency?: 'take_now' | 'safe_to_wait'
   suggestion: string
   valueTier?: number
 }

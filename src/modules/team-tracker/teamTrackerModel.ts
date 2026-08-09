@@ -42,6 +42,7 @@ export interface TeamTrackerViewModel {
   bench: TeamTrackerPlayer[]
   draftedAdditions: TeamTrackerPlayer[]
   lineupSlots: TeamTrackerLineupSlot[]
+  taxi: TeamTrackerPlayer[]
   totalPlayers: number
 }
 
@@ -60,13 +61,15 @@ export function buildTeamTrackerViewModel({
 }): TeamTrackerViewModel {
   const playersById = new Map(players.map((player) => [player.id, player]))
   const rosterPlayerIds = roster?.playerIds ?? []
+  const taxiPlayerIds = roster?.taxiPlayerIds ?? []
+  const taxiPlayerIdSet = new Set(taxiPlayerIds)
   const draftAdditionIds = getDraftedPlayerIdsForRoster(
     draftPicks,
     selectedTeamId
   )
   const draftAdditionIdSet = new Set(draftAdditionIds)
   const trackedPlayerIds = Array.from(
-    new Set([...rosterPlayerIds, ...draftAdditionIds])
+    new Set([...rosterPlayerIds, ...taxiPlayerIds, ...draftAdditionIds])
   )
 
   const trackedPlayers = trackedPlayerIds.flatMap<TeamTrackerPlayer>(
@@ -101,8 +104,10 @@ export function buildTeamTrackerViewModel({
   const assignedStarterIds = new Set(
     lineupSlots.flatMap((slot) => (slot.player ? [slot.player.id] : []))
   )
+  const taxi = trackedPlayers.filter((player) => taxiPlayerIdSet.has(player.id))
   const bench = trackedPlayers.filter(
-    (player) => !assignedStarterIds.has(player.id)
+    (player) =>
+      !assignedStarterIds.has(player.id) && !taxiPlayerIdSet.has(player.id)
   )
   const draftedAdditions = trackedPlayers.filter(
     (player) => player.isDraftAddition
@@ -112,6 +117,7 @@ export function buildTeamTrackerViewModel({
     bench,
     draftedAdditions,
     lineupSlots,
+    taxi,
     totalPlayers: trackedPlayers.length,
   }
 }

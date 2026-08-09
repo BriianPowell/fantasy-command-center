@@ -105,9 +105,6 @@ export function DraftPlayerTile({
         ...(recommendation.valueTier
           ? [`Tier ${recommendation.valueTier}`]
           : []),
-        ...(recommendation.positionRank
-          ? [`Pos #${recommendation.positionRank}`]
-          : []),
         recommendation.suggestion,
         `Value ${formatComponentScore(recommendation.valueScore)}`,
       ]}

@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { buildDraftRecommendations } from './draftRecommendations'
-import type { LeagueSettings, Player, Position } from '../domain/types'
+import type {
+  DraftState,
+  LeagueSettings,
+  Player,
+  Position,
+} from '../domain/types'
 
 const leagueSettings: LeagueSettings = {
   rosterSlots: {
@@ -173,7 +178,6 @@ describe('buildDraftRecommendations', () => {
     expect(eliteRecommendation?.valueTier).toBe(1)
     expect(eliteRecommendation?.dropOffAfter).toBeGreaterThanOrEqual(8)
     expect(eliteRecommendation?.suggestion).toBe('Beat tier drop')
-    expect(eliteRecommendation?.notes).toContain('Tier 1 RB value')
     expect(eliteRecommendation?.insight).toContain('RB value drop')
 
     expect(nextRecommendation?.positionRank).toBe(2)
@@ -181,6 +185,62 @@ describe('buildDraftRecommendations', () => {
 
     expect(receiverRecommendation?.positionRank).toBe(1)
     expect(receiverRecommendation?.valueTier).toBe(1)
+  })
+
+  it('flags a tier as urgent when it may not return by the next pick', () => {
+    const topRunningBack = makePlayer({
+      id: 'top-rb',
+      position: 'RB',
+      searchRank: 1,
+    })
+    const tierEndRunningBack = makePlayer({
+      id: 'tier-end-rb',
+      position: 'RB',
+      searchRank: 2,
+    })
+    const nextTierRunningBack = makePlayer({
+      id: 'next-tier-rb',
+      position: 'RB',
+      searchRank: 20,
+    })
+    const draft: DraftState = {
+      currentPick: 3,
+      id: 'draft-1',
+      picks: [
+        {
+          pickNo: 2,
+          rosterId: 'team-2',
+          round: 1,
+        },
+      ],
+      rounds: 3,
+      status: 'drafting',
+      type: 'snake',
+    }
+
+    const recommendations = buildDraftRecommendations({
+      draft,
+      leagueSettings: {
+        ...leagueSettings,
+        teams: 4,
+      },
+      notes: [],
+      players: [nextTierRunningBack, tierEndRunningBack, topRunningBack],
+      projections: [],
+      rankings: [],
+      selectedTeamId: 'team-2',
+      unavailablePlayerIds: new Set(),
+    })
+    const tierEndRecommendation = recommendations.find(
+      (recommendation) => recommendation.player.id === tierEndRunningBack.id
+    )
+
+    expect(tierEndRecommendation?.picksUntilNextPick).toBe(4)
+    expect(tierEndRecommendation?.tierPlayersRemaining).toBe(2)
+    expect(tierEndRecommendation?.tierUrgency).toBe('take_now')
+    expect(tierEndRecommendation?.suggestion).toBe(
+      'Take now: tier may not return'
+    )
   })
 
   it('scales scarcity by league size and roster demand', () => {

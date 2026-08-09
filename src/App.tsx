@@ -4,6 +4,7 @@ import { EmptyState } from './components/dashboard/EmptyState'
 import { LeagueDashboard } from './components/dashboard/LeagueDashboard'
 import { TopBar } from './components/dashboard/TopBar'
 import { fantasyConfig } from './config/fantasyConfig'
+import { type DraftSyncStatus, mergeLeagueDraftState } from './domain/draftSync'
 import type { NflState, NormalizedLeagueData, Player } from './domain/types'
 import { loadNflTeamByeWeeks } from './providers/schedule/nflScheduleApi'
 import { SleeperProvider } from './providers/sleeper/SleeperProvider'
@@ -16,6 +17,7 @@ import {
 
 const sleeperProvider = new SleeperProvider()
 const configuredLeagueIds = [...fantasyConfig.sleeperLeagueIds]
+const DRAFT_SYNC_INTERVAL_MS = 15_000
 
 export function App() {
   const [leagues, setLeagues] = useState<NormalizedLeagueData[]>([])
@@ -25,9 +27,24 @@ export function App() {
   const [minimizedModules, setMinimizedModules] =
     useState<Record<DashboardModuleId, boolean>>(loadMinimizedModules)
   const [nflState, setNflState] = useState<NflState | undefined>()
+  const [draftSyncStatuses, setDraftSyncStatuses] = useState<
+    Record<string, DraftSyncStatus>
+  >({})
   const [status, setStatus] = useState('Loading configured Sleeper leagues...')
   const [errors, setErrors] = useState<string[]>([])
   const hasAutoLoaded = useRef(false)
+  const activeLeague =
+    leagues.find((league) => league.league.id === activeDashboardId) ??
+    leagues[0]
+  const activeLeagueId = activeLeague?.league.id
+  const activeDraftId = activeLeague?.draft?.id
+  const activePollingDraftId =
+    activeLeague?.draft?.status === 'drafting'
+      ? activeLeague.draft.id
+      : undefined
+  const activeDraftSyncStatus = activeLeagueId
+    ? draftSyncStatuses[activeLeagueId]
+    : undefined
 
   useEffect(() => {
     saveActiveDashboardId(activeDashboardId)
@@ -42,6 +59,86 @@ export function App() {
     hasAutoLoaded.current = true
     void loadLeagues()
   }, [])
+
+  useEffect(() => {
+    if (!activeLeagueId || !activePollingDraftId) {
+      if (activeLeagueId) {
+        setDraftSyncStatuses((current) =>
+          removeDraftSyncStatus(current, activeLeagueId)
+        )
+      }
+
+      return
+    }
+
+    let isCancelled = false
+
+    async function refreshActiveDraft() {
+      if (!activeLeagueId || !activePollingDraftId) {
+        return
+      }
+
+      await refreshDraftStatus(
+        activeLeagueId,
+        activePollingDraftId,
+        () => isCancelled
+      )
+    }
+
+    void refreshActiveDraft()
+    const intervalId = window.setInterval(
+      refreshActiveDraft,
+      DRAFT_SYNC_INTERVAL_MS
+    )
+
+    return () => {
+      isCancelled = true
+      window.clearInterval(intervalId)
+    }
+  }, [activeLeagueId, activePollingDraftId])
+
+  async function refreshDraftStatus(
+    leagueId: string,
+    draftId: string,
+    isCancelled: () => boolean = () => false
+  ) {
+    setDraftSyncStatuses((current) => ({
+      ...current,
+      [leagueId]: {
+        message: 'Refreshing draft picks',
+        state: 'syncing',
+      },
+    }))
+
+    try {
+      const draft = await sleeperProvider.refreshDraftState(draftId)
+
+      if (isCancelled()) {
+        return
+      }
+
+      setLeagues((current) => mergeLeagueDraftState(current, leagueId, draft))
+      setDraftSyncStatuses((current) => ({
+        ...current,
+        [leagueId]: {
+          lastUpdatedAt: Date.now(),
+          state: 'synced',
+        },
+      }))
+    } catch (caughtError) {
+      if (isCancelled()) {
+        return
+      }
+
+      setDraftSyncStatuses((current) => ({
+        ...current,
+        [leagueId]: {
+          message: readError(caughtError),
+          state: 'error',
+        },
+      }))
+    }
+  }
 
   async function loadLeagues() {
     setErrors([])
@@ -123,10 +220,6 @@ export function App() {
     }
   }
 
-  const activeLeague =
-    leagues.find((league) => league.league.id === activeDashboardId) ??
-    leagues[0]
-
   return (
     <main className="app-shell">
       <TopBar
@@ -146,7 +239,13 @@ export function App() {
       {activeLeague ? (
         <LeagueDashboard
           data={activeLeague}
+          draftSyncStatus={activeDraftSyncStatus}
           minimizedModules={minimizedModules}
+          onRefreshDraftStatus={
+            activeLeagueId && activeDraftId
+              ? () => void refreshDraftStatus(activeLeagueId, activeDraftId)
+              : undefined
+          }
           onToggleModule={(moduleId) =>
             setMinimizedModules((current) => ({
               ...current,
@@ -177,6 +276,20 @@ function formatNflWeekLabel(nflState: NflState | undefined): string {
   }
 
   return `Week ${week}`
+}
+
+function removeDraftSyncStatus(
+  statuses: Record<string, DraftSyncStatus>,
+  leagueId: string
+): Record<string, DraftSyncStatus> {
+  if (!statuses[leagueId]) {
+    return statuses
+  }
+
+  const nextStatuses = { ...statuses }
+  delete nextStatuses[leagueId]
+
+  return nextStatuses
 }
 
 async function enrichPlayersWithScheduleByeWeeks(
