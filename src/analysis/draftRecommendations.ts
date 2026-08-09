@@ -9,6 +9,7 @@ import {
 } from '../domain/playerValueUtils'
 import {
   canFillFlexPosition,
+  canFillSuperFlexPosition,
   getPrimaryPosition,
   isPositionConfiguredForLeague,
 } from '../domain/positionUtils'
@@ -83,73 +84,216 @@ export function buildDraftRecommendations(
     input.unavailablePlayerIds
   )
 
-  return draftCandidates
-    .map((player) => {
-      const ranking = rankingByPlayer.get(player.id)
-      const projection = projectionByPlayer.get(player.id)
-      const note = noteByPlayer.get(player.id)
-      const valueScore = scoreDraftPlayerValue(player, ranking, projection)
-      const rosterFit = getRosterFit(
-        player,
-        rosterPositionCounts,
-        input.roster,
-        input.leagueSettings
-      )
-      const needScore = scoreNeed(player, rosterFit)
-      const scarcityScore = scoreScarcity(player, remainingByPosition)
-      const strategyEvaluation = evaluatePlayerStrategy(
-        player,
-        input.strategyContext
-      )
-      const byeRisk = scoreByeRisk(player, input.roster, rosterByeCounts)
-      const noteBoost =
-        note?.tag === 'target' ? 6 : note?.tag === 'avoid' ? -12 : 0
+  const recommendations = draftCandidates.map((player) => {
+    const ranking = rankingByPlayer.get(player.id)
+    const projection = projectionByPlayer.get(player.id)
+    const note = noteByPlayer.get(player.id)
+    const valueScore = scoreDraftPlayerValue(player, ranking, projection)
+    const rosterFit = getRosterFit(
+      player,
+      rosterPositionCounts,
+      input.roster,
+      input.leagueSettings
+    )
+    const needScore = scoreNeed(player, rosterFit)
+    const scarcityScore = scoreScarcity(
+      player,
+      remainingByPosition,
+      input.leagueSettings
+    )
+    const strategyEvaluation = evaluatePlayerStrategy(
+      player,
+      input.strategyContext
+    )
+    const byeRisk = scoreByeRisk(player, input.roster, rosterByeCounts)
+    const noteBoost =
+      note?.tag === 'target' ? 6 : note?.tag === 'avoid' ? -12 : 0
 
-      return {
+    return {
+      player,
+      score: Math.round(
+        valueScore +
+          needScore +
+          scarcityScore +
+          strategyEvaluation.score -
+          byeRisk +
+          noteBoost
+      ),
+      valueScore,
+      needScore,
+      scarcityScore,
+      strategyScore: Math.round(strategyEvaluation.score),
+      byeRisk,
+      insight: buildRecommendationInsight(
         player,
-        score: Math.round(
-          valueScore +
-            needScore +
-            scarcityScore +
-            strategyEvaluation.score -
-            byeRisk +
-            noteBoost
-        ),
+        rosterFit,
         valueScore,
-        needScore,
         scarcityScore,
-        strategyScore: Math.round(strategyEvaluation.score),
-        byeRisk,
-        insight: buildRecommendationInsight(
+        byeRisk
+      ),
+      notes: [
+        ...buildRecommendationNotes(
           player,
+          ranking,
+          projection,
+          note,
           rosterFit,
-          valueScore,
+          needScore,
           scarcityScore,
           byeRisk
         ),
-        notes: [
-          ...buildRecommendationNotes(
-            player,
-            ranking,
-            projection,
-            note,
-            rosterFit,
-            needScore,
-            scarcityScore,
-            byeRisk
-          ),
-          ...strategyEvaluation.notes,
-        ],
-        suggestion: buildPickSuggestion({
-          byeRisk,
-          needScore,
-          player,
-          scarcityScore,
-          valueScore,
-        }),
+        ...strategyEvaluation.notes,
+      ],
+      suggestion: buildPickSuggestion({
+        byeRisk,
+        needScore,
+        player,
+        scarcityScore,
+        valueScore,
+      }),
+    }
+  })
+
+  return addAvailablePlayerContext(recommendations).sort(
+    (a, b) => b.score - a.score
+  )
+}
+
+interface AvailablePlayerContext {
+  dropOffAfter?: number
+  positionRank: number
+  valueTier: number
+}
+
+function addAvailablePlayerContext(
+  recommendations: DraftRecommendation[]
+): DraftRecommendation[] {
+  const contextsByPlayerId = new Map<string, AvailablePlayerContext>()
+  const recommendationsByPosition = new Map<Position, DraftRecommendation[]>()
+
+  for (const recommendation of recommendations) {
+    const position = getPrimaryPosition(recommendation.player.positions)
+
+    if (!position) {
+      continue
+    }
+
+    recommendationsByPosition.set(position, [
+      ...(recommendationsByPosition.get(position) ?? []),
+      recommendation,
+    ])
+  }
+
+  for (const positionRecommendations of recommendationsByPosition.values()) {
+    const sortedRecommendations = [...positionRecommendations].sort(
+      (a, b) => b.valueScore - a.valueScore
+    )
+    let valueTier = 1
+    let previousValue = sortedRecommendations[0]?.valueScore
+
+    sortedRecommendations.forEach((recommendation, index) => {
+      if (
+        previousValue !== undefined &&
+        index > 0 &&
+        previousValue - recommendation.valueScore >= 8
+      ) {
+        valueTier += 1
       }
+
+      const nextRecommendation = sortedRecommendations[index + 1]
+      const dropOffAfter = nextRecommendation
+        ? recommendation.valueScore - nextRecommendation.valueScore
+        : undefined
+
+      contextsByPlayerId.set(recommendation.player.id, {
+        ...(dropOffAfter !== undefined ? { dropOffAfter } : {}),
+        positionRank: index + 1,
+        valueTier,
+      })
+      previousValue = recommendation.valueScore
     })
-    .sort((a, b) => b.score - a.score)
+  }
+
+  return recommendations.map((recommendation) => {
+    const context = contextsByPlayerId.get(recommendation.player.id)
+
+    if (!context) {
+      return recommendation
+    }
+
+    return {
+      ...recommendation,
+      ...context,
+      insight: buildContextualRecommendationInsight(recommendation, context),
+      notes: [
+        ...recommendation.notes,
+        ...buildAvailableContextNotes(recommendation, context),
+      ],
+      suggestion: buildContextualPickSuggestion(recommendation, context),
+    }
+  })
+}
+
+function buildContextualRecommendationInsight(
+  recommendation: DraftRecommendation,
+  context: AvailablePlayerContext
+): string {
+  const position = getPrimaryPosition(recommendation.player.positions)
+
+  if (
+    position &&
+    context.dropOffAfter !== undefined &&
+    context.dropOffAfter >= 8
+  ) {
+    return `${recommendation.insight} There is a ${Math.round(
+      context.dropOffAfter
+    )} point ${position} value drop after this tier.`
+  }
+
+  if (position && context.valueTier === 1 && context.positionRank <= 3) {
+    return `${recommendation.insight} This is a top available ${position} option in the current pool.`
+  }
+
+  return recommendation.insight
+}
+
+function buildContextualPickSuggestion(
+  recommendation: DraftRecommendation,
+  context: AvailablePlayerContext
+): string {
+  if (
+    context.valueTier === 1 &&
+    context.dropOffAfter !== undefined &&
+    context.dropOffAfter >= 8
+  ) {
+    return 'Beat tier drop'
+  }
+
+  return recommendation.suggestion
+}
+
+function buildAvailableContextNotes(
+  recommendation: DraftRecommendation,
+  context: AvailablePlayerContext
+): string[] {
+  const position = getPrimaryPosition(recommendation.player.positions)
+  if (!position) {
+    return []
+  }
+
+  const notes = [`Tier ${context.valueTier} ${position} value`]
+
+  if (context.positionRank <= 3) {
+    notes.push(`#${context.positionRank} available ${position}`)
+  }
+
+  if (context.dropOffAfter !== undefined && context.dropOffAfter >= 8) {
+    notes.push(
+      `Next ${position} value drops ${Math.round(context.dropOffAfter)} points`
+    )
+  }
+
+  return notes
 }
 
 function getDraftCandidates(
@@ -276,7 +420,8 @@ function benchBuffer(position: string): number {
 
 function scoreScarcity(
   player: Player,
-  remainingByPosition: Map<string, number>
+  remainingByPosition: Map<string, number>,
+  leagueSettings: LeagueSettings
 ): number {
   const primaryPosition = getPrimaryPosition(player.positions)
   if (!primaryPosition) {
@@ -284,16 +429,45 @@ function scoreScarcity(
   }
 
   const remainingAtPosition = remainingByPosition.get(primaryPosition) ?? 0
+  const leagueDemand = getLeaguePositionDemand(primaryPosition, leagueSettings)
+  const bufferedDemand = Math.max(leagueDemand * 1.5, 1)
+  const availabilityPressure = Math.max(
+    0,
+    (bufferedDemand - remainingAtPosition) / bufferedDemand
+  )
 
-  if (primaryPosition === 'RB' || primaryPosition === 'TE') {
-    return Math.max(0, 20 - remainingAtPosition / 6)
+  return availabilityPressure * getPositionScarcityWeight(primaryPosition)
+}
+
+function getLeaguePositionDemand(
+  position: Position,
+  leagueSettings: LeagueSettings
+): number {
+  const requiredSlots = leagueSettings.rosterSlots[position] ?? 0
+  const flexSlots = canFillFlexPosition(position)
+    ? (leagueSettings.rosterSlots.FLEX ?? 0)
+    : 0
+  const superFlexSlots = canFillSuperFlexPosition(position)
+    ? (leagueSettings.rosterSlots.SUPER_FLEX ?? 0)
+    : 0
+
+  return (requiredSlots + flexSlots + superFlexSlots) * leagueSettings.teams
+}
+
+function getPositionScarcityWeight(position: Position): number {
+  if (position === 'RB' || position === 'TE') {
+    return 20
   }
 
-  if (primaryPosition === 'WR') {
-    return Math.max(0, 16 - remainingAtPosition / 8)
+  if (position === 'WR') {
+    return 18
   }
 
-  return Math.max(0, 10 - remainingAtPosition / 10)
+  if (position === 'QB') {
+    return 14
+  }
+
+  return 8
 }
 
 function scoreByeRisk(

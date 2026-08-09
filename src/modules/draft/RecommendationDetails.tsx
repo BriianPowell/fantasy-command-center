@@ -20,6 +20,18 @@ export function RecommendationDetails({
         </div>
       </div>
       <div className="recommendation-breakdown">
+        {recommendation.valueTier ? (
+          <span>Tier {recommendation.valueTier}</span>
+        ) : null}
+        {recommendation.positionRank ? (
+          <span>Position rank #{recommendation.positionRank}</span>
+        ) : null}
+        {recommendation.dropOffAfter !== undefined &&
+        recommendation.dropOffAfter >= 4 ? (
+          <span>
+            Next drop-off {formatComponentScore(recommendation.dropOffAfter)}
+          </span>
+        ) : null}
         <span>Value {formatComponentScore(recommendation.valueScore)}</span>
         <span>Need {formatComponentScore(recommendation.needScore)}</span>
         <span>

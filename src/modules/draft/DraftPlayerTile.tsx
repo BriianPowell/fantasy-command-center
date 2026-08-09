@@ -102,6 +102,12 @@ export function DraftPlayerTile({
       meta={[
         player.team ?? 'FA',
         ...(player.byeWeek ? [`Bye ${player.byeWeek}`] : []),
+        ...(recommendation.valueTier
+          ? [`Tier ${recommendation.valueTier}`]
+          : []),
+        ...(recommendation.positionRank
+          ? [`Pos #${recommendation.positionRank}`]
+          : []),
         recommendation.suggestion,
         `Value ${formatComponentScore(recommendation.valueScore)}`,
       ]}

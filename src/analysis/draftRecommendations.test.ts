@@ -123,6 +123,118 @@ describe('buildDraftRecommendations', () => {
     )
   })
 
+  it('adds available position tier, rank, and drop-off context', () => {
+    const eliteRunningBack = makePlayer({
+      id: 'elite-rb',
+      position: 'RB',
+      searchRank: 1,
+    })
+    const nextRunningBack = makePlayer({
+      id: 'next-rb',
+      position: 'RB',
+      searchRank: 5,
+    })
+    const laterRunningBack = makePlayer({
+      id: 'later-rb',
+      position: 'RB',
+      searchRank: 45,
+    })
+    const topReceiver = makePlayer({
+      id: 'top-wr',
+      position: 'WR',
+      searchRank: 2,
+    })
+
+    const recommendations = buildDraftRecommendations({
+      leagueSettings,
+      notes: [],
+      players: [
+        laterRunningBack,
+        topReceiver,
+        nextRunningBack,
+        eliteRunningBack,
+      ],
+      projections: [],
+      rankings: [],
+      unavailablePlayerIds: new Set(),
+    })
+
+    const eliteRecommendation = recommendations.find(
+      (recommendation) => recommendation.player.id === eliteRunningBack.id
+    )
+    const nextRecommendation = recommendations.find(
+      (recommendation) => recommendation.player.id === nextRunningBack.id
+    )
+    const receiverRecommendation = recommendations.find(
+      (recommendation) => recommendation.player.id === topReceiver.id
+    )
+
+    expect(eliteRecommendation?.positionRank).toBe(1)
+    expect(eliteRecommendation?.valueTier).toBe(1)
+    expect(eliteRecommendation?.dropOffAfter).toBeGreaterThanOrEqual(8)
+    expect(eliteRecommendation?.suggestion).toBe('Beat tier drop')
+    expect(eliteRecommendation?.notes).toContain('Tier 1 RB value')
+    expect(eliteRecommendation?.insight).toContain('RB value drop')
+
+    expect(nextRecommendation?.positionRank).toBe(2)
+    expect(nextRecommendation?.valueTier).toBe(2)
+
+    expect(receiverRecommendation?.positionRank).toBe(1)
+    expect(receiverRecommendation?.valueTier).toBe(1)
+  })
+
+  it('scales scarcity by league size and roster demand', () => {
+    const tightEnds = Array.from({ length: 5 }, (_, index) =>
+      makePlayer({
+        id: `te-${index + 1}`,
+        position: 'TE',
+        searchRank: index + 1,
+      })
+    )
+    const smallerLeagueSettings = {
+      ...leagueSettings,
+      teams: 8,
+    }
+    const largerLeagueSettings = {
+      ...leagueSettings,
+      teams: 12,
+    }
+
+    const smallerLeagueRecommendations = buildDraftRecommendations({
+      leagueSettings: smallerLeagueSettings,
+      notes: [],
+      players: tightEnds,
+      projections: [],
+      rankings: [],
+      unavailablePlayerIds: new Set(),
+    })
+    const largerLeagueRecommendations = buildDraftRecommendations({
+      leagueSettings: largerLeagueSettings,
+      notes: [],
+      players: tightEnds,
+      projections: [],
+      rankings: [],
+      unavailablePlayerIds: new Set(),
+    })
+    const smallerTopTightEnd = smallerLeagueRecommendations.find(
+      (recommendation) => recommendation.player.id === 'te-1'
+    )
+    const largerTopTightEnd = largerLeagueRecommendations.find(
+      (recommendation) => recommendation.player.id === 'te-1'
+    )
+
+    expect(smallerTopTightEnd).toBeDefined()
+    expect(largerTopTightEnd).toBeDefined()
+
+    if (!smallerTopTightEnd || !largerTopTightEnd) {
+      throw new Error('Expected top tight end recommendations')
+    }
+
+    expect(largerTopTightEnd.scarcityScore).toBeGreaterThan(
+      smallerTopTightEnd.scarcityScore
+    )
+  })
+
   it('excludes players without a current NFL team', () => {
     const rosteredReceiver = makePlayer({
       id: 'rostered-wr',
