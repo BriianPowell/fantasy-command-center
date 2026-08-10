@@ -1,5 +1,11 @@
 import { formatComponentScore } from './draftFormatting'
 import { getPrimaryPosition } from './draftPositionUtils'
+import { InjuryInsightCallout } from '../../components/player/InjuryInsightCallout'
+import {
+  buildInjuryDetailLabels,
+  buildInjuryInsightLines,
+  getInjuryRiskToneClass,
+} from '../../domain/injuryStatus'
 import type { DraftRecommendation, Position } from '../../domain/types'
 
 export function RecommendationDetails({
@@ -9,6 +15,14 @@ export function RecommendationDetails({
 }) {
   const positionContext = getPositionScoringContext(
     getPrimaryPosition(recommendation.player.positions)
+  )
+  const injuryInsightLines = buildInjuryInsightLines(recommendation.player)
+  const injuryToneClass = getInjuryRiskToneClass(recommendation.player)
+  const injuryDetailNotes = new Set(
+    buildInjuryDetailLabels(recommendation.player)
+  )
+  const nonInjuryNotes = recommendation.notes.filter(
+    (note) => !note.startsWith('Injury') && !injuryDetailNotes.has(note)
   )
 
   return (
@@ -47,22 +61,34 @@ export function RecommendationDetails({
           Strategy {formatComponentScore(recommendation.strategyScore)}
         </span>
         <span>Bye risk {formatComponentScore(recommendation.byeRisk)}</span>
+        {recommendation.injuryRisk > 0 ? (
+          <span className={`injury-breakdown-chip ${injuryToneClass}`}>
+            Injury penalty {formatComponentScore(-recommendation.injuryRisk)}
+          </span>
+        ) : null}
       </div>
       <div className="note-list">
         <span className="recommendation-insight-note">
           {recommendation.suggestion}: {recommendation.insight}
         </span>
+        {injuryInsightLines ? (
+          <InjuryInsightCallout
+            className="recommendation-injury-note"
+            lines={injuryInsightLines}
+            toneClass={injuryToneClass}
+          />
+        ) : null}
         {positionContext ? (
           <span className="position-context-note">{positionContext}</span>
         ) : null}
-        {recommendation.notes.length ? (
-          recommendation.notes.map((note) => <span key={note}>{note}</span>)
-        ) : (
+        {nonInjuryNotes.length ? (
+          nonInjuryNotes.map((note) => <span key={note}>{note}</span>)
+        ) : !injuryInsightLines ? (
           <span>
             Baseline score from value, roster need, positional scarcity, and
             strategy context.
           </span>
-        )}
+        ) : null}
       </div>
     </article>
   )

@@ -102,8 +102,10 @@ export class SleeperProvider {
     )
   }
 
-  async loadPlayers(): Promise<Player[]> {
-    this.playersCache ??= this.fetchPlayers()
+  async loadPlayers({ forceRefresh = false } = {}): Promise<Player[]> {
+    if (forceRefresh || !this.playersCache) {
+      this.playersCache = this.fetchPlayers()
+    }
 
     return this.playersCache
   }

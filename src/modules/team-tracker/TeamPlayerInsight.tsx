@@ -1,7 +1,13 @@
 import type { TeamTrackerPlayer } from './teamTrackerModel'
+import { InjuryInsightCallout } from '../../components/player/InjuryInsightCallout'
 import { getSleeperPlayerImageUrl } from '../../components/player/playerAssets'
 import { PlayerReferenceTile } from '../../components/player/PlayerReferenceTile'
 import { SlotBadge } from '../../components/player/SlotBadge'
+import {
+  buildInjuryInsightLines,
+  formatInjurySummary,
+  getInjuryRiskToneClass,
+} from '../../domain/injuryStatus'
 import {
   formatDraftValueScore,
   scoreDraftPlayerValue,
@@ -23,6 +29,8 @@ export function TeamPlayerInsightPanel({
   const playerValue = scoreDraftPlayerValue(player.player)
   const valueDelta = playerValue - baselineValue
   const valueDeltaLabel = formatDraftValueScore(valueDelta)
+  const injuryInsightLines = buildInjuryInsightLines(player.player)
+  const injuryToneClass = getInjuryRiskToneClass(player.player)
   const primarySignal = buildPlayerInsightSignal({
     isWeakSpot,
     player,
@@ -58,7 +66,14 @@ export function TeamPlayerInsightPanel({
           Vs team avg <strong>{valueDeltaLabel}</strong>
         </span>
       </div>
-      <p>{primarySignal}</p>
+      {injuryInsightLines ? (
+        <InjuryInsightCallout
+          lines={injuryInsightLines}
+          toneClass={injuryToneClass}
+        />
+      ) : (
+        <p className="team-player-primary-signal">{primarySignal}</p>
+      )}
       <div className="team-player-insight-notes">
         <span>{player.player.team ?? 'FA'}</span>
         {player.player.byeWeek ? (
@@ -66,7 +81,6 @@ export function TeamPlayerInsightPanel({
         ) : null}
         {player.isDraftAddition ? <span>Draft addition</span> : null}
         {isWeakSpot ? <span>Weak spot position</span> : null}
-        <span>{valueDelta >= 0 ? 'Above baseline' : 'Below baseline'}</span>
       </div>
     </aside>
   )
@@ -95,6 +109,8 @@ export function TeamPlayerRow({
 }) {
   const valueScore = formatDraftValueScore(scoreDraftPlayerValue(player.player))
   const isInteractive = Boolean(onSelect)
+  const injurySummaryLabel = formatInjurySummary(player.player)
+  const injuryToneClass = getInjuryRiskToneClass(player.player)
 
   return (
     <PlayerReferenceTile
@@ -113,6 +129,13 @@ export function TeamPlayerRow({
       meta={[
         player.player.team ?? 'FA',
         ...(player.player.byeWeek ? [`Bye ${player.player.byeWeek}`] : []),
+        ...(injurySummaryLabel
+          ? [
+              <span className={`player-injury-chip ${injuryToneClass}`}>
+                {injurySummaryLabel}
+              </span>,
+            ]
+          : []),
         `Value ${valueScore}`,
         ...(player.isDraftAddition ? ['Draft addition'] : []),
       ]}

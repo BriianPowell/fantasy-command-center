@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { type DashboardModuleId } from './components/dashboard/dashboardTypes'
 import { EmptyState } from './components/dashboard/EmptyState'
 import { LeagueDashboard } from './components/dashboard/LeagueDashboard'
@@ -18,6 +18,16 @@ import {
 const sleeperProvider = new SleeperProvider()
 const configuredLeagueIds = [...fantasyConfig.sleeperLeagueIds]
 const DRAFT_SYNC_INTERVAL_MS = 15_000
+
+interface DraftRefreshOptions {
+  isCancelled?: () => boolean
+  refreshPlayers?: boolean
+}
+
+interface PlayerMetadataResult {
+  players: Player[]
+  warning?: string
+}
 
 export function App() {
   const [leagues, setLeagues] = useState<NormalizedLeagueData[]>([])
@@ -46,101 +56,105 @@ export function App() {
     ? draftSyncStatuses[activeLeagueId]
     : undefined
 
-  useEffect(() => {
-    saveActiveDashboardId(activeDashboardId)
-    saveMinimizedModules(minimizedModules)
-  }, [activeDashboardId, minimizedModules])
+  const loadFreshPlayerMetadata =
+    useCallback(async (): Promise<PlayerMetadataResult> => {
+      const players = await sleeperProvider.loadPlayers({ forceRefresh: true })
+      const { players: playersWithByeWeeks, warning: byeWeekWarning } =
+        await enrichPlayersWithScheduleByeWeeks(players)
 
-  useEffect(() => {
-    if (hasAutoLoaded.current || !configuredLeagueIds.length) {
-      return
-    }
-
-    hasAutoLoaded.current = true
-    void loadLeagues()
-  }, [])
-
-  useEffect(() => {
-    if (!activeLeagueId || !activePollingDraftId) {
-      if (activeLeagueId) {
-        setDraftSyncStatuses((current) =>
-          removeDraftSyncStatus(current, activeLeagueId)
-        )
+      return {
+        players: playersWithByeWeeks,
+        ...(byeWeekWarning ? { warning: byeWeekWarning } : {}),
       }
+    }, [])
 
-      return
-    }
-
-    let isCancelled = false
-
-    async function refreshActiveDraft() {
-      if (!activeLeagueId || !activePollingDraftId) {
-        return
-      }
-
-      await refreshDraftStatus(
-        activeLeagueId,
-        activePollingDraftId,
-        () => isCancelled
-      )
-    }
-
-    void refreshActiveDraft()
-    const intervalId = window.setInterval(
-      refreshActiveDraft,
-      DRAFT_SYNC_INTERVAL_MS
-    )
-
-    return () => {
-      isCancelled = true
-      window.clearInterval(intervalId)
-    }
-  }, [activeLeagueId, activePollingDraftId])
-
-  async function refreshDraftStatus(
-    leagueId: string,
-    draftId: string,
-    isCancelled: () => boolean = () => false
-  ) {
-    setDraftSyncStatuses((current) => ({
-      ...current,
-      [leagueId]: {
-        message: 'Refreshing draft picks',
-        state: 'syncing',
-      },
-    }))
-
-    try {
-      const draft = await sleeperProvider.refreshDraftState(draftId)
-
-      if (isCancelled()) {
-        return
-      }
-
-      setLeagues((current) => mergeLeagueDraftState(current, leagueId, draft))
+  const refreshDraftStatus = useCallback(
+    async (
+      leagueId: string,
+      draftId: string,
+      {
+        isCancelled = () => false,
+        refreshPlayers = false,
+      }: DraftRefreshOptions = {}
+    ) => {
       setDraftSyncStatuses((current) => ({
         ...current,
         [leagueId]: {
-          lastUpdatedAt: Date.now(),
-          state: 'synced',
+          message: 'Refreshing draft picks',
+          state: 'syncing',
         },
       }))
-    } catch (caughtError) {
-      if (isCancelled()) {
-        return
+
+      try {
+        const draft = await sleeperProvider.refreshDraftState(draftId)
+        let refreshedPlayerMetadata: PlayerMetadataResult | undefined
+        let playerMetadataError: string | undefined
+
+        if (refreshPlayers) {
+          try {
+            refreshedPlayerMetadata = await loadFreshPlayerMetadata()
+          } catch (caughtError) {
+            playerMetadataError = `Player metadata: ${readError(caughtError)}`
+          }
+        }
+
+        if (isCancelled()) {
+          return
+        }
+
+        const refreshWarning = refreshedPlayerMetadata?.warning
+
+        if (refreshWarning) {
+          setErrors((current) => appendUniqueError(current, refreshWarning))
+        }
+
+        if (playerMetadataError) {
+          setErrors((current) =>
+            appendUniqueError(current, playerMetadataError)
+          )
+        }
+
+        setLeagues((current) => {
+          const nextLeagues = mergeLeagueDraftState(current, leagueId, draft)
+
+          if (!refreshedPlayerMetadata) {
+            return nextLeagues
+          }
+
+          return nextLeagues.map((league) =>
+            league.league.id === leagueId
+              ? { ...league, players: refreshedPlayerMetadata.players }
+              : league
+          )
+        })
+        setDraftSyncStatuses((current) => ({
+          ...current,
+          [leagueId]: {
+            lastUpdatedAt: Date.now(),
+            ...(playerMetadataError
+              ? { message: 'Draft picks refreshed; player metadata failed' }
+              : {}),
+            state: 'synced',
+          },
+        }))
+      } catch (caughtError) {
+        if (isCancelled()) {
+          return
+        }
+
+        setDraftSyncStatuses((current) => ({
+          ...current,
+          [leagueId]: {
+            message: readError(caughtError),
+            state: 'error',
+          },
+        }))
       }
+    },
+    [loadFreshPlayerMetadata]
+  )
 
-      setDraftSyncStatuses((current) => ({
-        ...current,
-        [leagueId]: {
-          message: readError(caughtError),
-          state: 'error',
-        },
-      }))
-    }
-  }
-
-  async function loadLeagues() {
+  const loadLeagues = useCallback(async () => {
     setErrors([])
     setStatus(
       `Loading ${configuredLeagueIds.length} Sleeper league${configuredLeagueIds.length === 1 ? '' : 's'}...`
@@ -188,15 +202,16 @@ export function App() {
     }
 
     try {
-      const players = await sleeperProvider.loadPlayers()
-      const { players: playersWithByeWeeks, warning: byeWeekWarning } =
-        await enrichPlayersWithScheduleByeWeeks(players)
+      const playerMetadata = await loadFreshPlayerMetadata()
+      const playersWithByeWeeks = playerMetadata.players
       const loadedLeagueIds = new Set(
         loadedLeagues.map((league) => league.league.id)
       )
 
-      if (byeWeekWarning) {
-        setErrors((current) => [...current, byeWeekWarning])
+      const playerWarning = playerMetadata.warning
+
+      if (playerWarning) {
+        setErrors((current) => appendUniqueError(current, playerWarning))
       }
 
       setLeagues((current) =>
@@ -218,7 +233,56 @@ export function App() {
         `Loaded ${loadedLeagues.length} dashboard${loadedLeagues.length === 1 ? '' : 's'} without player metadata.`
       )
     }
-  }
+  }, [loadFreshPlayerMetadata])
+
+  useEffect(() => {
+    saveActiveDashboardId(activeDashboardId)
+    saveMinimizedModules(minimizedModules)
+  }, [activeDashboardId, minimizedModules])
+
+  useEffect(() => {
+    if (hasAutoLoaded.current || !configuredLeagueIds.length) {
+      return
+    }
+
+    hasAutoLoaded.current = true
+    void loadLeagues()
+  }, [loadLeagues])
+
+  useEffect(() => {
+    if (!activeLeagueId || !activePollingDraftId) {
+      if (activeLeagueId) {
+        setDraftSyncStatuses((current) =>
+          removeDraftSyncStatus(current, activeLeagueId)
+        )
+      }
+
+      return
+    }
+
+    let isCancelled = false
+
+    async function refreshActiveDraft() {
+      if (!activeLeagueId || !activePollingDraftId) {
+        return
+      }
+
+      await refreshDraftStatus(activeLeagueId, activePollingDraftId, {
+        isCancelled: () => isCancelled,
+      })
+    }
+
+    void refreshActiveDraft()
+    const intervalId = window.setInterval(
+      refreshActiveDraft,
+      DRAFT_SYNC_INTERVAL_MS
+    )
+
+    return () => {
+      isCancelled = true
+      window.clearInterval(intervalId)
+    }
+  }, [activeLeagueId, activePollingDraftId, refreshDraftStatus])
 
   return (
     <main className="app-shell">
@@ -243,7 +307,10 @@ export function App() {
           minimizedModules={minimizedModules}
           onRefreshDraftStatus={
             activeLeagueId && activeDraftId
-              ? () => void refreshDraftStatus(activeLeagueId, activeDraftId)
+              ? () =>
+                  void refreshDraftStatus(activeLeagueId, activeDraftId, {
+                    refreshPlayers: true,
+                  })
               : undefined
           }
           onToggleModule={(moduleId) =>
@@ -290,6 +357,10 @@ function removeDraftSyncStatus(
   delete nextStatuses[leagueId]
 
   return nextStatuses
+}
+
+function appendUniqueError(errors: string[], nextError: string): string[] {
+  return errors.includes(nextError) ? errors : [...errors, nextError]
 }
 
 async function enrichPlayersWithScheduleByeWeeks(

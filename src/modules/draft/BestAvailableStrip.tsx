@@ -1,6 +1,10 @@
 import { getPositionClass, getPrimaryPosition } from './draftPositionUtils'
 import { getSleeperPlayerImageUrl } from '../../components/player/playerAssets'
 import { PlayerReferenceTile } from '../../components/player/PlayerReferenceTile'
+import {
+  formatInjurySummary,
+  getInjuryRiskToneClass,
+} from '../../domain/injuryStatus'
 import type { DraftRecommendation } from '../../domain/types'
 
 export function BestAvailableStrip({
@@ -26,6 +30,8 @@ export function BestAvailableStrip({
           const primaryPosition = getPrimaryPosition(
             recommendation.player.positions
           )
+          const injurySummaryLabel = formatInjurySummary(recommendation.player)
+          const injuryToneClass = getInjuryRiskToneClass(recommendation.player)
 
           return (
             <PlayerReferenceTile
@@ -37,6 +43,13 @@ export function BestAvailableStrip({
                 primaryPosition ?? 'Any',
                 ...(recommendation.valueTier
                   ? [`Tier ${recommendation.valueTier}`]
+                  : []),
+                ...(injurySummaryLabel
+                  ? [
+                      <span className={`player-injury-chip ${injuryToneClass}`}>
+                        {injurySummaryLabel}
+                      </span>,
+                    ]
                   : []),
                 recommendation.suggestion,
               ]}

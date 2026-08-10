@@ -48,6 +48,7 @@ const leagueData: NormalizedLeagueData = {
     {
       fullName: 'Starter Player',
       id: 'player-1',
+      injuryBodyPart: 'Knee',
       positions: ['RB'],
       providerPlayerId: 'player-1',
       searchRank: 1,
@@ -147,6 +148,28 @@ describe('TeamTrackerModule', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Close' }))
 
     expect(screen.queryByText('Roster Insight')).not.toBeInTheDocument()
+  })
+
+  it('shows injury details on roster rows and player insights', () => {
+    render(
+      <TeamTrackerModule
+        data={leagueData}
+        isMinimized={false}
+        onToggleMinimized={vi.fn()}
+        roster={leagueData.rosters[0]}
+        selectedTeamId="team-1"
+      />
+    )
+
+    expect(screen.getByText('Injury: Knee')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Starter Player/ }))
+
+    const insightPanel = screen.getByText('Roster Insight').closest('aside')
+    expect(insightPanel).toBeInTheDocument()
+    expect(
+      within(insightPanel as HTMLElement).getByText('Knee')
+    ).toBeInTheDocument()
   })
 
   it('labels taxi squad player insights with the taxi role', () => {

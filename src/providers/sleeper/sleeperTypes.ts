@@ -108,6 +108,9 @@ export interface SleeperPlayer {
   position?: string
   age?: number
   years_exp?: number
+  injury_body_part?: string
+  injury_notes?: string
+  injury_start_date?: string
   injury_status?: string
   bye_week?: number
   search_rank?: number

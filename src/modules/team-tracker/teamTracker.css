@@ -229,14 +229,23 @@
 }
 
 .team-player-insight-panel > p,
+.team-player-insight-panel > .injury-insight-callout,
 .team-player-insight-notes {
   grid-column: 1 / -1;
 }
 
 .team-player-insight-panel > p {
-  color: #fef3c7;
   font-weight: 900;
   margin-bottom: 0;
+}
+
+.team-player-primary-signal {
+  background: rgba(30, 41, 59, 0.42);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 0.9rem;
+  color: #e2e8f0;
+  line-height: 1.35;
+  padding: 0.68rem 0.78rem;
 }
 
 .team-player-insight-grid {
@@ -356,7 +365,7 @@
   left: calc(100% + 0.75rem);
   position: absolute;
   top: 0;
-  width: min(370px, 70vw);
+  width: min(430px, 78vw);
   z-index: 50;
 }
 

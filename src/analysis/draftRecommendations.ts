@@ -10,6 +10,12 @@ import {
 } from '../domain/draftBoardMode'
 import type { DraftBoardMode } from '../domain/draftBoardMode'
 import {
+  buildDraftAvailabilityInsight,
+  buildInjuryDetailLabels,
+  formatPlayerInjuryRiskNote,
+  scorePlayerInjuryRisk,
+} from '../domain/injuryStatus'
+import {
   comparePlayersBySearchRank,
   scoreDraftPlayerValue,
 } from '../domain/playerValueUtils'
@@ -115,6 +121,7 @@ export function buildDraftRecommendations(
       input.strategyContext
     )
     const byeRisk = scoreByeRisk(player, input.roster, rosterByeCounts)
+    const injuryRisk = scorePlayerInjuryRisk(player)
     const noteBoost =
       note?.tag === 'target' ? 6 : note?.tag === 'avoid' ? -12 : 0
 
@@ -125,7 +132,8 @@ export function buildDraftRecommendations(
           needScore +
           scarcityScore +
           strategyEvaluation.score -
-          byeRisk +
+          byeRisk -
+          injuryRisk +
           noteBoost
       ),
       valueScore,
@@ -133,12 +141,14 @@ export function buildDraftRecommendations(
       scarcityScore,
       strategyScore: Math.round(strategyEvaluation.score),
       byeRisk,
+      injuryRisk,
       insight: buildRecommendationInsight(
         player,
         rosterFit,
         valueScore,
         scarcityScore,
-        byeRisk
+        byeRisk,
+        injuryRisk
       ),
       notes: [
         ...buildRecommendationNotes(
@@ -149,7 +159,8 @@ export function buildDraftRecommendations(
           rosterFit,
           needScore,
           scarcityScore,
-          byeRisk
+          byeRisk,
+          injuryRisk
         ),
         ...strategyEvaluation.notes,
       ],
@@ -158,6 +169,7 @@ export function buildDraftRecommendations(
         needScore,
         player,
         scarcityScore,
+        injuryRisk,
         valueScore,
       }),
     }
@@ -561,7 +573,8 @@ function buildRecommendationNotes(
   rosterFit: RosterFit | undefined,
   needScore: number,
   scarcityScore: number,
-  byeRisk: number
+  byeRisk: number,
+  injuryRisk: number
 ): string[] {
   const notes: string[] = []
 
@@ -585,6 +598,16 @@ function buildRecommendationNotes(
     notes.push(`Bye week ${player.byeWeek} overlap`)
   }
 
+  if (injuryRisk > 0) {
+    const injuryNote = formatPlayerInjuryRiskNote(player)
+
+    if (injuryNote) {
+      notes.push(injuryNote)
+    }
+
+    notes.push(...buildInjuryDetailLabels(player))
+  }
+
   if (note) {
     notes.push(`${note.tag}: ${note.note ?? 'manual note'}`)
   }
@@ -597,9 +620,15 @@ function buildRecommendationInsight(
   rosterFit: RosterFit | undefined,
   valueScore: number,
   scarcityScore: number,
-  byeRisk: number
+  byeRisk: number,
+  injuryRisk: number
 ): string {
   const primaryPosition = getPrimaryPosition(player.positions)
+  const injuryInsight = buildDraftAvailabilityInsight(player)
+
+  if (injuryInsight && injuryRisk >= 8) {
+    return injuryInsight
+  }
 
   if (rosterFit && rosterFit.currentDepth < rosterFit.targetDepth) {
     return `${primaryPosition} depth is ${rosterFit.currentDepth}/${rosterFit.targetDepth}, so this pick directly improves roster construction.`
@@ -625,12 +654,14 @@ function buildPickSuggestion({
   needScore,
   player,
   scarcityScore,
+  injuryRisk,
   valueScore,
 }: {
   byeRisk: number
   needScore: number
   player: Player
   scarcityScore: number
+  injuryRisk: number
   valueScore: number
 }): string {
   const primaryPosition = getPrimaryPosition(player.positions)
@@ -653,6 +684,10 @@ function buildPickSuggestion({
 
   if (byeRisk >= 6) {
     return 'Bye-week caution'
+  }
+
+  if (injuryRisk >= 8) {
+    return 'Injury caution'
   }
 
   if (needScore > 0) {

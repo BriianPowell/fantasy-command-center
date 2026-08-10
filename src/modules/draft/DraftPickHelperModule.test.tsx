@@ -63,11 +63,13 @@ const leagueData: NormalizedLeagueData = {
 const recommendation: DraftRecommendation = {
   byeRisk: 0,
   insight: 'Fits the current roster build.',
+  injuryRisk: 3,
   needScore: 8,
   notes: ['Good value on the board.'],
   player: {
     fullName: 'Recommended Player',
     id: 'recommended-player',
+    injuryStatus: 'Questionable',
     positions: ['RB'],
     providerPlayerId: 'recommended-player',
     searchRank: 1,
@@ -129,6 +131,7 @@ describe('DraftPickHelperModule', () => {
     expect(screen.getByText(/Updated/)).toBeInTheDocument()
     expect(screen.getByText('Best Available')).toBeInTheDocument()
     expect(screen.getAllByText('Recommended Player').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Questionable').length).toBeGreaterThan(0)
     expect(screen.getByText('Latest Picks')).toBeInTheDocument()
     expect(screen.getByText('Picked Player')).toBeInTheDocument()
 

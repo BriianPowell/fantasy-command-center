@@ -29,12 +29,16 @@ const leagueSettings: LeagueSettings = {
 
 function makePlayer({
   id,
+  injuryStatus,
+  injuryNotes,
   position,
   searchRank,
   team = 'DET',
   yearsExperience,
 }: {
   id: string
+  injuryStatus?: string
+  injuryNotes?: string
   position: Position
   searchRank: number
   team?: string
@@ -44,6 +48,8 @@ function makePlayer({
     id,
     providerPlayerId: id,
     fullName: id,
+    injuryNotes,
+    injuryStatus,
     positions: [position],
     searchRank,
     team,
@@ -292,6 +298,55 @@ describe('buildDraftRecommendations', () => {
 
     expect(largerTopTightEnd.scarcityScore).toBeGreaterThan(
       smallerTopTightEnd.scarcityScore
+    )
+  })
+
+  it('accounts for injury status in draft scores and notes', () => {
+    const healthyReceiver = makePlayer({
+      id: 'healthy-wr',
+      position: 'WR',
+      searchRank: 10,
+    })
+    const injuredReceiver = makePlayer({
+      id: 'injured-wr',
+      injuryNotes: 'Expected to miss multiple weeks',
+      injuryStatus: 'Out',
+      position: 'WR',
+      searchRank: 10,
+    })
+
+    const recommendations = buildDraftRecommendations({
+      leagueSettings,
+      notes: [],
+      players: [injuredReceiver, healthyReceiver],
+      projections: [],
+      rankings: [],
+      unavailablePlayerIds: new Set(),
+    })
+    const healthyRecommendation = recommendations.find(
+      (recommendation) => recommendation.player.id === healthyReceiver.id
+    )
+    const injuredRecommendation = recommendations.find(
+      (recommendation) => recommendation.player.id === injuredReceiver.id
+    )
+
+    expect(healthyRecommendation).toBeDefined()
+    expect(injuredRecommendation).toBeDefined()
+
+    if (!healthyRecommendation || !injuredRecommendation) {
+      throw new Error('Expected healthy and injured recommendations')
+    }
+
+    expect(injuredRecommendation.injuryRisk).toBe(12)
+    expect(injuredRecommendation.notes).toContain('Injury: Out')
+    expect(injuredRecommendation.notes).toContain(
+      'Expected to miss multiple weeks'
+    )
+    expect(injuredRecommendation.insight).toContain(
+      'Expected to miss multiple weeks'
+    )
+    expect(injuredRecommendation.score).toBeLessThan(
+      healthyRecommendation.score
     )
   })
 

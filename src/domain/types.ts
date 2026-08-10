@@ -40,6 +40,9 @@ export interface Player {
   positions: Position[]
   age?: number
   yearsExperience?: number
+  injuryBodyPart?: string
+  injuryNotes?: string
+  injuryStartDate?: string
   injuryStatus?: string
   byeWeek?: number
   searchRank?: number
@@ -157,6 +160,7 @@ export interface DraftRecommendation {
   byeRisk: number
   dropOffAfter?: number
   insight: string
+  injuryRisk: number
   notes: string[]
   picksUntilNextPick?: number
   positionRank?: number

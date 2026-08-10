@@ -3,7 +3,14 @@ import { formatComponentScore } from './draftFormatting'
 import { RecommendationDetails } from './RecommendationDetails'
 import { getSleeperPlayerImageUrl } from '../../components/player/playerAssets'
 import { PlayerReferenceTile } from '../../components/player/PlayerReferenceTile'
+import {
+  formatInjurySummary,
+  getInjuryRiskToneClass,
+} from '../../domain/injuryStatus'
 import type { DraftRecommendation } from '../../domain/types'
+
+const HOVER_OPEN_DELAY_MS = 160
+const HOVER_CLOSE_DELAY_MS = 100
 
 interface DraftPlayerTileProps {
   hoverCooldownRef: { current: number }
@@ -19,9 +26,11 @@ export function DraftPlayerTile({
   recommendation,
 }: DraftPlayerTileProps) {
   const { player } = recommendation
+  const injurySummaryLabel = formatInjurySummary(player)
+  const injuryToneClass = getInjuryRiskToneClass(player)
   const [isWhyOpen, setIsWhyOpen] = useState(false)
+  const hoverCloseTimer = useRef<number | undefined>(undefined)
   const hoverOpenTimer = useRef<number | undefined>(undefined)
-  const ignoreScrollUntil = useRef(0)
   const tileRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -31,12 +40,8 @@ export function DraftPlayerTile({
 
     const scrollContainer = tileRef.current?.closest('.draft-position-column')
     const closeOnScroll = () => {
-      if (Date.now() < ignoreScrollUntil.current) {
-        return
-      }
-
       onScrollCooldown()
-      closeRecommendationDetails()
+      closeRecommendationDetails({ immediate: true })
     }
 
     scrollContainer?.addEventListener('scroll', closeOnScroll, {
@@ -51,17 +56,14 @@ export function DraftPlayerTile({
   }, [isWhyOpen, onScrollCooldown])
 
   useEffect(() => {
-    if (!isWhyOpen) {
-      return
+    return () => {
+      window.clearTimeout(hoverCloseTimer.current)
+      window.clearTimeout(hoverOpenTimer.current)
     }
+  }, [])
 
-    ignoreScrollUntil.current = Date.now() + 200
-    requestAnimationFrame(() => {
-      tileRef.current?.scrollIntoView({ block: 'nearest' })
-    })
-  }, [isWhyOpen])
-
-  function openRecommendationDetails() {
+  function openRecommendationDetails({ immediate = false } = {}) {
+    window.clearTimeout(hoverCloseTimer.current)
     window.clearTimeout(hoverOpenTimer.current)
 
     if (isTileUnderColumnHeader(tileRef.current)) {
@@ -70,8 +72,11 @@ export function DraftPlayerTile({
     }
 
     const cooldownRemaining = hoverCooldownRef.current - Date.now()
+    const openDelay = immediate
+      ? Math.max(cooldownRemaining, 0)
+      : Math.max(cooldownRemaining, HOVER_OPEN_DELAY_MS)
 
-    if (cooldownRemaining > 0) {
+    if (openDelay > 0) {
       hoverOpenTimer.current = window.setTimeout(() => {
         if (
           !isTileUnderColumnHeader(tileRef.current) &&
@@ -80,16 +85,25 @@ export function DraftPlayerTile({
         ) {
           setIsWhyOpen(true)
         }
-      }, cooldownRemaining)
+      }, openDelay)
       return
     }
 
     setIsWhyOpen(true)
   }
 
-  function closeRecommendationDetails() {
+  function closeRecommendationDetails({ immediate = false } = {}) {
     window.clearTimeout(hoverOpenTimer.current)
-    setIsWhyOpen(false)
+
+    if (immediate) {
+      window.clearTimeout(hoverCloseTimer.current)
+      setIsWhyOpen(false)
+      return
+    }
+
+    hoverCloseTimer.current = window.setTimeout(() => {
+      setIsWhyOpen(false)
+    }, HOVER_CLOSE_DELAY_MS)
   }
 
   return (
@@ -102,6 +116,13 @@ export function DraftPlayerTile({
       meta={[
         player.team ?? 'FA',
         ...(player.byeWeek ? [`Bye ${player.byeWeek}`] : []),
+        ...(injurySummaryLabel
+          ? [
+              <span className={`player-injury-chip ${injuryToneClass}`}>
+                {injurySummaryLabel}
+              </span>,
+            ]
+          : []),
         ...(recommendation.valueTier
           ? [`Tier ${recommendation.valueTier}`]
           : []),
@@ -113,13 +134,12 @@ export function DraftPlayerTile({
           !(event.relatedTarget instanceof Node) ||
           !event.currentTarget.contains(event.relatedTarget)
         ) {
-          setIsWhyOpen(false)
+          closeRecommendationDetails({ immediate: true })
         }
       }}
-      onFocus={openRecommendationDetails}
-      onMouseEnter={openRecommendationDetails}
-      onMouseLeave={closeRecommendationDetails}
-      onMouseMove={openRecommendationDetails}
+      onFocus={() => openRecommendationDetails({ immediate: true })}
+      onMouseEnter={() => openRecommendationDetails()}
+      onMouseLeave={() => closeRecommendationDetails()}
       ref={tileRef}
       tabIndex={0}
       playerName={player.fullName}
