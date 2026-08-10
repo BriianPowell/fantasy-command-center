@@ -1,5 +1,5 @@
-import { formatComponentScore } from './draftFormatting'
-import { getPrimaryPosition } from './draftPositionUtils'
+import { formatComponentScore } from './formatting'
+import { getPrimaryPosition } from './positionUtils'
 import { InjuryInsightCallout } from '../../components/player/InjuryInsightCallout'
 import {
   buildInjuryDetailLabels,

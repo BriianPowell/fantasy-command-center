@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildLockerRoomViewModel } from './lockerRoomModel'
+import { buildViewModel } from './model'
 import type { LeagueSettings, Player, Position } from '../../domain/types'
 
 const leagueSettings: LeagueSettings = {
@@ -31,13 +31,13 @@ function makePlayer(id: string, position: Position): Player {
   }
 }
 
-describe('buildLockerRoomViewModel', () => {
+describe('buildViewModel', () => {
   it('assigns roster starters to exact and flex slots before benching the rest', () => {
     const quarterback = makePlayer('quarterback', 'QB')
     const runningBack = makePlayer('running-back', 'RB')
     const wideReceiver = makePlayer('wide-receiver', 'WR')
 
-    const viewModel = buildLockerRoomViewModel({
+    const viewModel = buildViewModel({
       draftPicks: [],
       leagueSettings,
       players: [quarterback, runningBack, wideReceiver],
@@ -64,7 +64,7 @@ describe('buildLockerRoomViewModel', () => {
     const draftedWideReceiver = makePlayer('drafted-wr', 'WR')
     const otherTeamQuarterback = makePlayer('other-team-qb', 'QB')
 
-    const viewModel = buildLockerRoomViewModel({
+    const viewModel = buildViewModel({
       draftPicks: [
         {
           pickNo: 1,
@@ -106,7 +106,7 @@ describe('buildLockerRoomViewModel', () => {
     const benchPlayer = makePlayer('bench-qb', 'QB')
     const taxiPlayer = makePlayer('taxi-wr', 'WR')
 
-    const viewModel = buildLockerRoomViewModel({
+    const viewModel = buildViewModel({
       draftPicks: [],
       leagueSettings,
       players: [starter, benchPlayer, taxiPlayer],

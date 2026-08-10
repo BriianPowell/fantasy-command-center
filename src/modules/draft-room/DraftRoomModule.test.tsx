@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { DraftPickHelperModule } from './DraftPickHelperModule'
+import { DraftRoomModule } from './DraftRoomModule'
 import type {
   DraftRecommendation,
   NormalizedLeagueData,
@@ -103,12 +103,12 @@ const defenseRecommendation: DraftRecommendation = {
   },
 }
 
-describe('DraftPickHelperModule', () => {
+describe('DraftRoomModule', () => {
   it('renders the draft room, status chips, best available, and board columns', () => {
     const onRefreshDraftStatus = vi.fn()
 
     render(
-      <DraftPickHelperModule
+      <DraftRoomModule
         boardMode="full_pool"
         data={leagueData}
         draftMode="redraft"
@@ -149,7 +149,7 @@ describe('DraftPickHelperModule', () => {
 
   it('does not render columns for positions with no league roster slots', () => {
     render(
-      <DraftPickHelperModule
+      <DraftRoomModule
         boardMode="full_pool"
         data={leagueData}
         draftMode="redraft"
@@ -181,7 +181,7 @@ describe('DraftPickHelperModule', () => {
     }
 
     render(
-      <DraftPickHelperModule
+      <DraftRoomModule
         boardMode="full_pool"
         data={completeLeagueData}
         draftMode="redraft"

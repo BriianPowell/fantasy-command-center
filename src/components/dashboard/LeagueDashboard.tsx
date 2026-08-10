@@ -17,7 +17,7 @@ import {
 } from '../../domain/draftPickUtils'
 import type { DraftSyncStatus } from '../../domain/draftSync'
 import type { NormalizedLeagueData } from '../../domain/types'
-import { DraftPickHelperModule } from '../../modules/draft'
+import { DraftRoomModule } from '../../modules/draft-room/DraftRoomModule'
 import { LockerRoomModule } from '../../modules/locker-room/LockerRoomModule'
 import { buildStrategyContext } from '../../strategy/teamOpportunity'
 
@@ -100,7 +100,7 @@ export function LeagueDashboard({
         roster={baseRoster}
         selectedTeamId={selectedTeamId}
       />
-      <DraftPickHelperModule
+      <DraftRoomModule
         boardMode={draftBoardContext.boardMode}
         data={data}
         draftMode={draftBoardContext.draftMode}

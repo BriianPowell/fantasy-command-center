@@ -1,16 +1,16 @@
 import { useCallback, useRef } from 'react'
 import { BestAvailableStrip } from './BestAvailableStrip'
-import { formatDraftStatus } from './draftFormatting'
-import { DraftPositionColumn } from './DraftPositionColumn'
+import { formatDraftStatus } from './formatting'
+import { PickList } from './PickList'
+import { PositionColumn } from './PositionColumn'
 import {
   getVisiblePositions,
   groupRecommendationsByPosition,
-} from './draftPositionUtils'
+} from './positionUtils'
 import './draftRoom.css'
 import { StatusChip } from './StatusChip'
 import { dashboardModuleLabels } from '../../components/dashboard/dashboardTypes'
 import { ModuleTrimToggle } from '../../components/dashboard/ModuleTrimToggle'
-import { PickList } from '../../components/dashboard/PickList'
 import {
   formatDraftBoardMode,
   formatLeagueDraftMode,
@@ -28,7 +28,7 @@ import type {
 
 const HOVER_DETAIL_SCROLL_COOLDOWN_MS = 250
 
-export interface DraftPickHelperModuleProps {
+export interface DraftRoomModuleProps {
   boardMode: DraftBoardMode
   data: NormalizedLeagueData
   draftMode: LeagueDraftMode
@@ -40,7 +40,7 @@ export interface DraftPickHelperModuleProps {
   selectedTeamId: string
 }
 
-export function DraftPickHelperModule({
+export function DraftRoomModule({
   boardMode,
   data,
   draftMode,
@@ -50,7 +50,7 @@ export function DraftPickHelperModule({
   onToggleMinimized,
   recommendations,
   selectedTeamId,
-}: DraftPickHelperModuleProps) {
+}: DraftRoomModuleProps) {
   const hoverDetailsSuppressedUntil = useRef(0)
   const recommendationsByPosition =
     groupRecommendationsByPosition(recommendations)
@@ -117,7 +117,7 @@ export function DraftPickHelperModule({
                 value={availablePlayerCount.toLocaleString()}
               />
             </div>
-            <p className="draft-room-helper">
+            <p className="draft-room-subtitle">
               Hover a player tile for full recommendation details.
             </p>
           </div>
@@ -157,7 +157,7 @@ export function DraftPickHelperModule({
           >
             <div className="draft-board-grid">
               {visiblePositions.map((position) => (
-                <DraftPositionColumn
+                <PositionColumn
                   hoverCooldownRef={hoverDetailsSuppressedUntil}
                   key={position}
                   onScrollCooldown={suppressHoverDetailsAfterScroll}

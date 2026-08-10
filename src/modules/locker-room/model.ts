@@ -25,28 +25,28 @@ const LINEUP_SLOT_ORDER: LineupSlotType[] = [
 
 export type LineupSlotType = Position | 'FLEX' | 'SUPER_FLEX'
 
-export interface LockerRoomPlayer {
+export interface TrackedPlayer {
   id: string
   isDraftAddition: boolean
   player: Player
   primaryPosition: Position
 }
 
-export interface LockerRoomLineupSlot {
+export interface LineupSlot {
   id: string
-  player?: LockerRoomPlayer
+  player?: TrackedPlayer
   slot: LineupSlotType
 }
 
-export interface LockerRoomViewModel {
-  bench: LockerRoomPlayer[]
-  draftedAdditions: LockerRoomPlayer[]
-  lineupSlots: LockerRoomLineupSlot[]
-  taxi: LockerRoomPlayer[]
+export interface ViewModel {
+  bench: TrackedPlayer[]
+  draftedAdditions: TrackedPlayer[]
+  lineupSlots: LineupSlot[]
+  taxi: TrackedPlayer[]
   totalPlayers: number
 }
 
-export function buildLockerRoomViewModel({
+export function buildViewModel({
   draftPicks,
   leagueSettings,
   players,
@@ -58,7 +58,7 @@ export function buildLockerRoomViewModel({
   players: Player[]
   roster: Roster | undefined
   selectedTeamId: string
-}): LockerRoomViewModel {
+}): ViewModel {
   const playersById = new Map(players.map((player) => [player.id, player]))
   const rosterPlayerIds = roster?.playerIds ?? []
   const taxiPlayerIds = roster?.taxiPlayerIds ?? []
@@ -72,29 +72,27 @@ export function buildLockerRoomViewModel({
     new Set([...rosterPlayerIds, ...taxiPlayerIds, ...draftAdditionIds])
   )
 
-  const trackedPlayers = trackedPlayerIds.flatMap<LockerRoomPlayer>(
-    (playerId) => {
-      const player = playersById.get(playerId)
-      const primaryPosition = player
-        ? getPrimaryPosition(player.positions)
-        : undefined
+  const trackedPlayers = trackedPlayerIds.flatMap<TrackedPlayer>((playerId) => {
+    const player = playersById.get(playerId)
+    const primaryPosition = player
+      ? getPrimaryPosition(player.positions)
+      : undefined
 
-      if (!player || !primaryPosition) {
-        return []
-      }
-
-      return [
-        {
-          id: player.id,
-          isDraftAddition:
-            draftAdditionIdSet.has(player.id) &&
-            !rosterPlayerIds.includes(player.id),
-          player,
-          primaryPosition,
-        },
-      ]
+    if (!player || !primaryPosition) {
+      return []
     }
-  )
+
+    return [
+      {
+        id: player.id,
+        isDraftAddition:
+          draftAdditionIdSet.has(player.id) &&
+          !rosterPlayerIds.includes(player.id),
+        player,
+        primaryPosition,
+      },
+    ]
+  })
 
   const lineupSlots = assignLineupSlots(
     buildLineupSlots(leagueSettings),
@@ -122,7 +120,7 @@ export function buildLockerRoomViewModel({
   }
 }
 
-function buildLineupSlots(settings: LeagueSettings): LockerRoomLineupSlot[] {
+function buildLineupSlots(settings: LeagueSettings): LineupSlot[] {
   return LINEUP_SLOT_ORDER.flatMap((slot) => {
     const slotCount = settings.rosterSlots[slot] ?? 0
 
@@ -134,10 +132,10 @@ function buildLineupSlots(settings: LeagueSettings): LockerRoomLineupSlot[] {
 }
 
 function assignLineupSlots(
-  slots: LockerRoomLineupSlot[],
+  slots: LineupSlot[],
   starterPlayerIds: string[],
-  trackedPlayers: LockerRoomPlayer[]
-): LockerRoomLineupSlot[] {
+  trackedPlayers: TrackedPlayer[]
+): LineupSlot[] {
   const playersById = new Map(
     trackedPlayers.map((player) => [player.id, player])
   )
@@ -161,9 +159,9 @@ function assignLineupSlots(
 }
 
 function findOpenSlot(
-  slots: LockerRoomLineupSlot[],
-  player: LockerRoomPlayer
-): LockerRoomLineupSlot | undefined {
+  slots: LineupSlot[],
+  player: TrackedPlayer
+): LineupSlot | undefined {
   return (
     slots.find(
       (slot) => !slot.player && slot.slot === player.primaryPosition

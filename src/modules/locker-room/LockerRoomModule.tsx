@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { buildLockerRoomViewModel } from './lockerRoomModel'
+import { buildViewModel } from './model'
 import {
   LineupSection,
   PositionNeedsSummary,
   RecentTeamPicksSection,
   RosterSection,
-  TrackerMetric,
-} from './LockerRoomSections'
+  SummaryMetric,
+} from './Sections'
 import {
   buildPositionValueGaps,
   buildTeamPickValueImpacts,
@@ -14,7 +14,7 @@ import {
   formatTeamValue,
   formatTeamValueDelta,
   isPositionWeakSpot,
-} from './lockerRoomValueModel'
+} from './valueModel'
 import './lockerRoom.css'
 import { dashboardModuleLabels } from '../../components/dashboard/dashboardTypes'
 import { ModuleTrimToggle } from '../../components/dashboard/ModuleTrimToggle'
@@ -43,7 +43,7 @@ export function LockerRoomModule({
     rosterId: selectedTeamId,
   })
   const scoringLabel = formatScoringType(data.league.settings.scoringType)
-  const tracker = buildLockerRoomViewModel({
+  const tracker = buildViewModel({
     draftPicks: data.draft?.picks ?? [],
     leagueSettings: data.league.settings,
     players: data.players,
@@ -104,28 +104,28 @@ export function LockerRoomModule({
         </div>
         <div className="locker-room-summary-stack">
           <div className="locker-room-summary">
-            <TrackerMetric label="Scoring" value={scoringLabel} />
-            <TrackerMetric
+            <SummaryMetric label="Scoring" value={scoringLabel} />
+            <SummaryMetric
               label="Team value"
               value={formatTeamValue(teamValue.totalValue)}
             />
-            <TrackerMetric
+            <SummaryMetric
               label="Starter value"
               value={formatTeamValue(teamValue.starterValue)}
             />
-            <TrackerMetric
+            <SummaryMetric
               label="Bench value"
               value={formatTeamValue(teamValue.benchValue)}
             />
-            <TrackerMetric
+            <SummaryMetric
               label="Starter edge"
               value={formatTeamValueDelta(teamValue.starterBenchDelta)}
             />
-            <TrackerMetric
+            <SummaryMetric
               label="Draft value"
               value={formatTeamValue(teamValue.draftedAdditionsValue)}
             />
-            <TrackerMetric
+            <SummaryMetric
               label="Last pick"
               value={formatTeamValueDelta(teamValue.latestPickDelta)}
             />

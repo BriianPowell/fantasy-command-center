@@ -1,4 +1,4 @@
-import type { LockerRoomLineupSlot, LockerRoomPlayer } from './lockerRoomModel'
+import type { LineupSlot, TrackedPlayer } from './model'
 import {
   formatDraftValueScore,
   scoreDraftPlayerValue,
@@ -51,12 +51,12 @@ export function buildTeamValueSnapshot({
   players,
   taxi = [],
 }: {
-  bench: LockerRoomPlayer[]
-  draftedAdditions: LockerRoomPlayer[]
-  lineupSlots: LockerRoomLineupSlot[]
+  bench: TrackedPlayer[]
+  draftedAdditions: TrackedPlayer[]
+  lineupSlots: LineupSlot[]
   picks: DraftPick[]
   players: Player[]
-  taxi?: LockerRoomPlayer[]
+  taxi?: TrackedPlayer[]
 }): TeamValueSnapshot {
   const starters = lineupSlots.flatMap((slot) =>
     slot.player ? [slot.player] : []
@@ -151,8 +151,8 @@ export function buildPositionValueGaps({
   bench,
   lineupSlots,
 }: {
-  bench: LockerRoomPlayer[]
-  lineupSlots: LockerRoomLineupSlot[]
+  bench: TrackedPlayer[]
+  lineupSlots: LineupSlot[]
 }): PositionValueGap[] {
   const starters = lineupSlots.flatMap((slot) =>
     slot.player ? [slot.player] : []
@@ -189,16 +189,14 @@ export function buildPositionValueGaps({
   })
 }
 
-function sumPlayerValues(players: LockerRoomPlayer[]): number {
+function sumPlayerValues(players: TrackedPlayer[]): number {
   return players.reduce(
     (total, player) => total + scoreDraftPlayerValue(player.player),
     0
   )
 }
 
-function getRequiredStarterPositions(
-  lineupSlots: LockerRoomLineupSlot[]
-): Position[] {
+function getRequiredStarterPositions(lineupSlots: LineupSlot[]): Position[] {
   return Array.from(
     new Set(
       lineupSlots.flatMap((slot) =>

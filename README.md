@@ -80,7 +80,7 @@ The week badge uses Sleeper's `state/nfl` endpoint. If Sleeper state is unavaila
 
 ## Module Structure
 
-- `src/modules/draft/DraftPickHelperModule.tsx`: Sleeper-style draft room grouped by position, with best available targets, latest picks, live sync status, and recommendation details.
+- `src/modules/draft-room/DraftRoomModule.tsx`: Sleeper-style draft room grouped by position, with best available targets, latest picks, live sync status, and recommendation details.
 - `src/modules/locker-room/LockerRoomModule.tsx`: Locker Room selected-team roster tracker with starters, bench, recent team picks, weak spots, value metrics, and click-to-open player insights.
 - `src/components/dashboard/`: shared UI primitives used across modules.
 

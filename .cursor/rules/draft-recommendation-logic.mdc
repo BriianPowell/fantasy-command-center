@@ -1,6 +1,6 @@
 ---
 description: Draft recommendation and board behavior conventions
-globs: src/analysis/**/*.ts, src/strategy/**/*.ts, src/modules/draft/**/*.tsx, src/modules/draft/**/*.ts, src/components/dashboard/LeagueDashboard.tsx
+globs: src/analysis/**/*.ts, src/strategy/**/*.ts, src/modules/draft-room/**/*.tsx, src/modules/draft-room/**/*.ts, src/components/dashboard/LeagueDashboard.tsx
 alwaysApply: false
 ---
 

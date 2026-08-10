@@ -1,4 +1,4 @@
-import type { LockerRoomPlayer } from './lockerRoomModel'
+import type { TrackedPlayer } from './model'
 import { InjuryInsightCallout } from '../../components/player/InjuryInsightCallout'
 import { getSleeperPlayerImageUrl } from '../../components/player/playerAssets'
 import { PlayerReferenceTile } from '../../components/player/PlayerReferenceTile'
@@ -13,7 +13,7 @@ import {
   scoreDraftPlayerValue,
 } from '../../domain/playerValueUtils'
 
-export function LockerRoomPlayerInsightPanel({
+export function PlayerInsightPanel({
   baselineValue,
   isWeakSpot,
   onClose,
@@ -23,7 +23,7 @@ export function LockerRoomPlayerInsightPanel({
   baselineValue: number
   isWeakSpot: boolean
   onClose: () => void
-  player: LockerRoomPlayer
+  player: TrackedPlayer
   roleLabel: string
 }) {
   const playerValue = scoreDraftPlayerValue(player.player)
@@ -86,7 +86,7 @@ export function LockerRoomPlayerInsightPanel({
   )
 }
 
-export function LockerRoomPlayerRow({
+export function PlayerRow({
   baselineValue,
   insightSide = 'right',
   isWeakSpot = false,
@@ -103,7 +103,7 @@ export function LockerRoomPlayerRow({
   isSelected?: boolean
   onCloseInsight?: () => void
   onSelect?: (playerId: string) => void
-  player: LockerRoomPlayer
+  player: TrackedPlayer
   roleLabel?: string
   slotLabel?: string
 }) {
@@ -167,7 +167,7 @@ export function LockerRoomPlayerRow({
           }
           onClick={(event) => event.stopPropagation()}
         >
-          <LockerRoomPlayerInsightPanel
+          <PlayerInsightPanel
             baselineValue={baselineValue}
             isWeakSpot={isWeakSpot}
             onClose={onCloseInsight ?? (() => undefined)}
@@ -186,7 +186,7 @@ function buildPlayerInsightSignal({
   valueDelta,
 }: {
   isWeakSpot: boolean
-  player: LockerRoomPlayer
+  player: TrackedPlayer
   valueDelta: number
 }): string {
   if (isWeakSpot && valueDelta >= 0) {

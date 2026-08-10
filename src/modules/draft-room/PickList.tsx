@@ -1,10 +1,10 @@
 import { type ReactNode, useEffect, useRef } from 'react'
-import { sortDraftPicks } from '../../domain/draftPickUtils'
-import type { DraftPick, Player } from '../../domain/types'
 import {
   DraftPickReferenceTile,
   type DraftPickReferenceTileTone,
-} from '../player/DraftPickReferenceTile'
+} from '../../components/player/DraftPickReferenceTile'
+import { sortDraftPicks } from '../../domain/draftPickUtils'
+import type { DraftPick, Player } from '../../domain/types'
 
 export function PickList({
   autoScrollToEnd = false,

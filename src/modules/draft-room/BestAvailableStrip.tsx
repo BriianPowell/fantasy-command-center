@@ -1,4 +1,4 @@
-import { getPositionClass, getPrimaryPosition } from './draftPositionUtils'
+import { getPositionClass, getPrimaryPosition } from './positionUtils'
 import { getSleeperPlayerImageUrl } from '../../components/player/playerAssets'
 import { PlayerReferenceTile } from '../../components/player/PlayerReferenceTile'
 import {

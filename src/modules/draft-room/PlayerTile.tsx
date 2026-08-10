@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { formatComponentScore } from './draftFormatting'
+import { formatComponentScore } from './formatting'
 import { RecommendationDetails } from './RecommendationDetails'
 import { getSleeperPlayerImageUrl } from '../../components/player/playerAssets'
 import { PlayerReferenceTile } from '../../components/player/PlayerReferenceTile'
@@ -12,19 +12,19 @@ import type { DraftRecommendation } from '../../domain/types'
 const HOVER_OPEN_DELAY_MS = 160
 const HOVER_CLOSE_DELAY_MS = 100
 
-interface DraftPlayerTileProps {
+interface PlayerTileProps {
   hoverCooldownRef: { current: number }
   onScrollCooldown: () => void
   rank: number
   recommendation: DraftRecommendation
 }
 
-export function DraftPlayerTile({
+export function PlayerTile({
   hoverCooldownRef,
   onScrollCooldown,
   rank,
   recommendation,
-}: DraftPlayerTileProps) {
+}: PlayerTileProps) {
   const { player } = recommendation
   const injurySummaryLabel = formatInjurySummary(player)
   const injuryToneClass = getInjuryRiskToneClass(player)

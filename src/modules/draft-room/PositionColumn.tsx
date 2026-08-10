@@ -1,20 +1,20 @@
-import { DraftPlayerTile } from './DraftPlayerTile'
-import { getPositionClass } from './draftPositionUtils'
+import { PlayerTile } from './PlayerTile'
+import { getPositionClass } from './positionUtils'
 import type { DraftRecommendation, Position } from '../../domain/types'
 
-interface DraftPositionColumnProps {
+interface PositionColumnProps {
   hoverCooldownRef: { current: number }
   onScrollCooldown: () => void
   position: Position
   recommendations: DraftRecommendation[]
 }
 
-export function DraftPositionColumn({
+export function PositionColumn({
   hoverCooldownRef,
   onScrollCooldown,
   position,
   recommendations,
-}: DraftPositionColumnProps) {
+}: PositionColumnProps) {
   const topRecommendation = recommendations[0]
 
   return (
@@ -34,7 +34,7 @@ export function DraftPositionColumn({
       </header>
       <div className="draft-player-stack">
         {recommendations.map((recommendation, index) => (
-          <DraftPlayerTile
+          <PlayerTile
             hoverCooldownRef={hoverCooldownRef}
             key={`${position}-${recommendation.player.id}`}
             onScrollCooldown={onScrollCooldown}
