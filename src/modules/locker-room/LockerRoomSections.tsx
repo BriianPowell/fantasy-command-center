@@ -1,13 +1,10 @@
-import { TeamPlayerRow } from './TeamPlayerInsight'
-import type {
-  TeamTrackerLineupSlot,
-  TeamTrackerPlayer,
-} from './teamTrackerModel'
+import type { LockerRoomLineupSlot, LockerRoomPlayer } from './lockerRoomModel'
+import { LockerRoomPlayerRow } from './LockerRoomPlayerInsight'
 import {
   isPositionWeakSpot,
   type PositionValueGap,
   type TeamPickValueImpact,
-} from './teamValueModel'
+} from './lockerRoomValueModel'
 import { DraftPickReferenceTile } from '../../components/player/DraftPickReferenceTile'
 import { PlayerReferenceTile } from '../../components/player/PlayerReferenceTile'
 import { SlotBadge } from '../../components/player/SlotBadge'
@@ -22,7 +19,7 @@ export function TrackerMetric({
   value: string
 }) {
   return (
-    <span className="team-tracker-metric">
+    <span className="locker-room-metric">
       <span>{label}</span>
       <strong>{value}</strong>
     </span>
@@ -42,9 +39,9 @@ export function LineupSection({
   onClosePlayerInsight?: () => void
   onPlayerSelect?: (playerId: string) => void
   selectedPlayerId?: string
-  slots: TeamTrackerLineupSlot[]
+  slots: LockerRoomLineupSlot[]
   title: string
-  weakPositions: Set<TeamTrackerPlayer['primaryPosition']>
+  weakPositions: Set<LockerRoomPlayer['primaryPosition']>
 }) {
   const filledSlots = slots.filter((slot) => slot.player).length
 
@@ -60,7 +57,7 @@ export function LineupSection({
         {slots.map((slot) =>
           slot.player ? (
             <div className="team-lineup-slot filled" key={slot.id}>
-              <TeamPlayerRow
+              <LockerRoomPlayerRow
                 isSelected={selectedPlayerId === slot.player.id}
                 baselineValue={baselineValue}
                 isWeakSpot={weakPositions.has(slot.player.primaryPosition)}
@@ -99,11 +96,11 @@ export function RosterSection({
   insightSide?: 'left' | 'right'
   onClosePlayerInsight?: () => void
   onPlayerSelect?: (playerId: string) => void
-  players: TeamTrackerPlayer[]
+  players: LockerRoomPlayer[]
   roleLabel?: string
   selectedPlayerId?: string
   title: string
-  weakPositions: Set<TeamTrackerPlayer['primaryPosition']>
+  weakPositions: Set<LockerRoomPlayer['primaryPosition']>
 }) {
   return (
     <section className="team-roster-section">
@@ -114,7 +111,7 @@ export function RosterSection({
       <div className="team-player-list">
         {players.length ? (
           players.map((player) => (
-            <TeamPlayerRow
+            <LockerRoomPlayerRow
               baselineValue={baselineValue}
               insightSide={insightSide}
               isWeakSpot={weakPositions.has(player.primaryPosition)}

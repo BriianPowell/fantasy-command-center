@@ -27,13 +27,13 @@ describe('dashboard preferences', () => {
     saveActiveDashboardId('league-1')
     saveMinimizedModules({
       draftRoom: true,
-      teamTracker: false,
+      lockerRoom: false,
     })
 
     expect(loadActiveDashboardId(['league-1', 'league-2'])).toBe('league-1')
     expect(loadMinimizedModules()).toEqual({
       draftRoom: true,
-      teamTracker: false,
+      lockerRoom: false,
     })
   })
 
@@ -46,7 +46,7 @@ describe('dashboard preferences', () => {
   it('falls back when minimized module state has an invalid shape', () => {
     window.localStorage.setItem(
       'fcc:v1:minimized-modules',
-      JSON.stringify({ draftRoom: 'yes', teamTracker: false })
+      JSON.stringify({ draftRoom: 'yes', lockerRoom: false })
     )
 
     expect(loadMinimizedModules()).toEqual(defaultMinimizedModules)

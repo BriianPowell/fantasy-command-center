@@ -19,11 +19,11 @@ describe('localStorage JSON helpers', () => {
   })
 
   it('saves and loads JSON values', () => {
-    saveJson('settings', { draftRoom: false, teamTracker: true })
+    saveJson('settings', { draftRoom: false, lockerRoom: true })
 
     expect(loadJson('settings', {})).toEqual({
       draftRoom: false,
-      teamTracker: true,
+      lockerRoom: true,
     })
   })
 

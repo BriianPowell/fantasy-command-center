@@ -1,7 +1,4 @@
-import type {
-  TeamTrackerLineupSlot,
-  TeamTrackerPlayer,
-} from './teamTrackerModel'
+import type { LockerRoomLineupSlot, LockerRoomPlayer } from './lockerRoomModel'
 import {
   formatDraftValueScore,
   scoreDraftPlayerValue,
@@ -54,12 +51,12 @@ export function buildTeamValueSnapshot({
   players,
   taxi = [],
 }: {
-  bench: TeamTrackerPlayer[]
-  draftedAdditions: TeamTrackerPlayer[]
-  lineupSlots: TeamTrackerLineupSlot[]
+  bench: LockerRoomPlayer[]
+  draftedAdditions: LockerRoomPlayer[]
+  lineupSlots: LockerRoomLineupSlot[]
   picks: DraftPick[]
   players: Player[]
-  taxi?: TeamTrackerPlayer[]
+  taxi?: LockerRoomPlayer[]
 }): TeamValueSnapshot {
   const starters = lineupSlots.flatMap((slot) =>
     slot.player ? [slot.player] : []
@@ -154,8 +151,8 @@ export function buildPositionValueGaps({
   bench,
   lineupSlots,
 }: {
-  bench: TeamTrackerPlayer[]
-  lineupSlots: TeamTrackerLineupSlot[]
+  bench: LockerRoomPlayer[]
+  lineupSlots: LockerRoomLineupSlot[]
 }): PositionValueGap[] {
   const starters = lineupSlots.flatMap((slot) =>
     slot.player ? [slot.player] : []
@@ -192,7 +189,7 @@ export function buildPositionValueGaps({
   })
 }
 
-function sumPlayerValues(players: TeamTrackerPlayer[]): number {
+function sumPlayerValues(players: LockerRoomPlayer[]): number {
   return players.reduce(
     (total, player) => total + scoreDraftPlayerValue(player.player),
     0
@@ -200,7 +197,7 @@ function sumPlayerValues(players: TeamTrackerPlayer[]): number {
 }
 
 function getRequiredStarterPositions(
-  lineupSlots: TeamTrackerLineupSlot[]
+  lineupSlots: LockerRoomLineupSlot[]
 ): Position[] {
   return Array.from(
     new Set(

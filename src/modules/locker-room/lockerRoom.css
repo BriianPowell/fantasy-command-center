@@ -1,28 +1,28 @@
-.team-tracker-panel {
+.locker-room-panel {
   display: grid;
   gap: 1rem;
   margin-bottom: 1rem;
 }
 
-.team-tracker-panel.has-player-insight {
+.locker-room-panel.has-player-insight {
   position: relative;
   z-index: 90;
 }
 
-.team-tracker-header {
+.locker-room-header {
   align-items: start;
   display: flex;
   gap: 1rem;
   justify-content: space-between;
 }
 
-.team-tracker-header h2 {
+.locker-room-header h2 {
   font-size: 1.45rem;
   letter-spacing: -0.02em;
   margin-bottom: 0.25rem;
 }
 
-.team-tracker-header p {
+.locker-room-header p {
   color: var(--text-muted);
   font-weight: 700;
   margin-bottom: 0;
@@ -126,18 +126,18 @@
   color: #a7f3d0;
 }
 
-.team-tracker-summary {
+.locker-room-summary {
   display: grid;
   gap: 0.45rem;
   grid-template-columns: repeat(7, minmax(76px, 1fr));
 }
 
-.team-tracker-summary-stack {
+.locker-room-summary-stack {
   display: grid;
   gap: 0.5rem;
 }
 
-.team-tracker-metric {
+.locker-room-metric {
   background: rgba(7, 11, 24, 0.32);
   border: 1px solid var(--border-subtle);
   border-radius: 0.75rem;
@@ -146,7 +146,7 @@
   padding: 0.48rem 0.58rem;
 }
 
-.team-tracker-metric span {
+.locker-room-metric span {
   color: var(--text-muted);
   font-size: 0.58rem;
   font-weight: 900;
@@ -154,7 +154,7 @@
   text-transform: uppercase;
 }
 
-.team-tracker-metric strong {
+.locker-room-metric strong {
   color: #f8fafc;
   font-size: 0.95rem;
 }
@@ -436,12 +436,12 @@
     grid-template-columns: 1fr;
   }
 
-  .team-tracker-header {
+  .locker-room-header {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .team-tracker-summary {
+  .locker-room-summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 

@@ -1,6 +1,11 @@
-export type DashboardModuleId = 'teamTracker' | 'draftRoom'
+export type DashboardModuleId = 'lockerRoom' | 'draftRoom'
+
+export const dashboardModuleLabels: Record<DashboardModuleId, string> = {
+  draftRoom: 'Draft Room',
+  lockerRoom: 'Locker Room',
+}
 
 export const defaultMinimizedModules: Record<DashboardModuleId, boolean> = {
   draftRoom: false,
-  teamTracker: false,
+  lockerRoom: false,
 }

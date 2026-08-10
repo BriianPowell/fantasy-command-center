@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { buildTeamTrackerViewModel } from './teamTrackerModel'
+import { buildLockerRoomViewModel } from './lockerRoomModel'
 import {
   LineupSection,
   PositionNeedsSummary,
   RecentTeamPicksSection,
   RosterSection,
   TrackerMetric,
-} from './TeamTrackerSections'
+} from './LockerRoomSections'
 import {
   buildPositionValueGaps,
   buildTeamPickValueImpacts,
@@ -14,13 +14,14 @@ import {
   formatTeamValue,
   formatTeamValueDelta,
   isPositionWeakSpot,
-} from './teamValueModel'
-import './teamTracker.css'
+} from './lockerRoomValueModel'
+import './lockerRoom.css'
+import { dashboardModuleLabels } from '../../components/dashboard/dashboardTypes'
 import { ModuleTrimToggle } from '../../components/dashboard/ModuleTrimToggle'
 import { getRecentDraftPicks } from '../../domain/draftPickUtils'
 import type { NormalizedLeagueData, Roster } from '../../domain/types'
 
-export interface TeamTrackerModuleProps {
+export interface LockerRoomModuleProps {
   data: NormalizedLeagueData
   isMinimized: boolean
   onToggleMinimized: () => void
@@ -28,13 +29,13 @@ export interface TeamTrackerModuleProps {
   selectedTeamId: string
 }
 
-export function TeamTrackerModule({
+export function LockerRoomModule({
   data,
   isMinimized,
   onToggleMinimized,
   roster,
   selectedTeamId,
-}: TeamTrackerModuleProps) {
+}: LockerRoomModuleProps) {
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | undefined>()
   const selectedTeam = data.teams.find((team) => team.id === selectedTeamId)
   const teamPicks = getRecentDraftPicks(data.draft?.picks ?? [], {
@@ -42,7 +43,7 @@ export function TeamTrackerModule({
     rosterId: selectedTeamId,
   })
   const scoringLabel = formatScoringType(data.league.settings.scoringType)
-  const tracker = buildTeamTrackerViewModel({
+  const tracker = buildLockerRoomViewModel({
     draftPicks: data.draft?.picks ?? [],
     leagueSettings: data.league.settings,
     players: data.players,
@@ -82,18 +83,18 @@ export function TeamTrackerModule({
     <section
       className={
         isMinimized
-          ? 'panel team-tracker-panel module-is-minimized'
+          ? 'panel locker-room-panel module-is-minimized'
           : selectedPlayerId
-            ? 'panel team-tracker-panel has-player-insight'
-            : 'panel team-tracker-panel'
+            ? 'panel locker-room-panel has-player-insight'
+            : 'panel locker-room-panel'
       }
     >
       <ModuleTrimToggle
         isMinimized={isMinimized}
-        moduleName="Team Tracker"
+        moduleName={dashboardModuleLabels.lockerRoom}
         onToggle={onToggleMinimized}
       />
-      <div className="team-tracker-header">
+      <div className="locker-room-header">
         <div>
           <h2>{selectedTeam?.name ?? 'Configured team'}</h2>
           <p>
@@ -101,8 +102,8 @@ export function TeamTrackerModule({
             {data.league.season} season
           </p>
         </div>
-        <div className="team-tracker-summary-stack">
-          <div className="team-tracker-summary">
+        <div className="locker-room-summary-stack">
+          <div className="locker-room-summary">
             <TrackerMetric label="Scoring" value={scoringLabel} />
             <TrackerMetric
               label="Team value"

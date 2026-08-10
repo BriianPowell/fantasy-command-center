@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { TeamTrackerPlayer } from './teamTrackerModel'
+import type { LockerRoomPlayer } from './lockerRoomModel'
 import {
   buildPositionValueGaps,
   buildTeamPickValueImpacts,
@@ -7,7 +7,7 @@ import {
   formatTeamValue,
   formatTeamValueDelta,
   isPositionWeakSpot,
-} from './teamValueModel'
+} from './lockerRoomValueModel'
 import type { Player, Position } from '../../domain/types'
 
 function makePlayer(
@@ -24,7 +24,7 @@ function makePlayer(
   }
 }
 
-function makeTrackedPlayer(player: Player): TeamTrackerPlayer {
+function makeTrackedPlayer(player: Player): LockerRoomPlayer {
   return {
     id: player.id,
     isDraftAddition: false,

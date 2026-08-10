@@ -8,6 +8,7 @@ import {
 } from './draftPositionUtils'
 import './draftRoom.css'
 import { StatusChip } from './StatusChip'
+import { dashboardModuleLabels } from '../../components/dashboard/dashboardTypes'
 import { ModuleTrimToggle } from '../../components/dashboard/ModuleTrimToggle'
 import { PickList } from '../../components/dashboard/PickList'
 import {
@@ -80,13 +81,13 @@ export function DraftPickHelperModule({
     >
       <ModuleTrimToggle
         isMinimized={isMinimized}
-        moduleName="Draft Room"
+        moduleName={dashboardModuleLabels.draftRoom}
         onToggle={onToggleMinimized}
       />
       <div className="panel-header">
         <div className="draft-room-intro">
           <div className="draft-room-heading">
-            <h2>Draft Room</h2>
+            <h2>{dashboardModuleLabels.draftRoom}</h2>
             <div className="draft-room-status">
               <StatusChip
                 label="Phase"

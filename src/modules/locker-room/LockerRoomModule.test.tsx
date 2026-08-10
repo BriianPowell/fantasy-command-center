@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { TeamTrackerModule } from './TeamTrackerModule'
+import { LockerRoomModule } from './LockerRoomModule'
 import type { NormalizedLeagueData } from '../../domain/types'
 
 const leagueData: NormalizedLeagueData = {
@@ -85,10 +85,10 @@ const leagueData: NormalizedLeagueData = {
   ],
 }
 
-describe('TeamTrackerModule', () => {
+describe('LockerRoomModule', () => {
   it('renders team context, value metrics, and roster sections', () => {
     render(
-      <TeamTrackerModule
+      <LockerRoomModule
         data={leagueData}
         isMinimized={false}
         onToggleMinimized={vi.fn()}
@@ -128,7 +128,7 @@ describe('TeamTrackerModule', () => {
 
   it('opens roster player insights when a player row is clicked', () => {
     render(
-      <TeamTrackerModule
+      <LockerRoomModule
         data={leagueData}
         isMinimized={false}
         onToggleMinimized={vi.fn()}
@@ -152,7 +152,7 @@ describe('TeamTrackerModule', () => {
 
   it('shows injury details on roster rows and player insights', () => {
     render(
-      <TeamTrackerModule
+      <LockerRoomModule
         data={leagueData}
         isMinimized={false}
         onToggleMinimized={vi.fn()}
@@ -174,7 +174,7 @@ describe('TeamTrackerModule', () => {
 
   it('labels taxi squad player insights with the taxi role', () => {
     render(
-      <TeamTrackerModule
+      <LockerRoomModule
         data={leagueData}
         isMinimized={false}
         onToggleMinimized={vi.fn()}

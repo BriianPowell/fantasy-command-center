@@ -4,13 +4,13 @@ A hosted fantasy football command center for Sleeper draft-day decisions, center
 
 ## 1.0 Feature Set
 
-Fantasy Command Center 1.0 focuses on two production-ready dashboard modules: Team Tracker and Draft Room.
+Fantasy Command Center 1.0 focuses on two production-ready dashboard modules: Locker Room and Draft Room.
 
 - GitHub Pages-ready React + TypeScript + Vite app.
 - Multi-league Sleeper dashboards seeded with your league IDs.
 - Configured Sleeper usernames so each league focuses on your team.
 - Normalized league, roster, player, and draft models.
-- Team Tracker module with starters, bench, recent team picks, bye weeks, team value, weak spots, draft impact, and click-to-open roster player insights.
+- Locker Room module with starters, bench, recent team picks, bye weeks, team value, weak spots, draft impact, and click-to-open roster player insights.
 - Sleeper-style Draft Room module with dynamic position columns, shared player tiles, top targets, latest picks, live draft sync, tier urgency, scarcity, roster fit, and recommendation explanations.
 - Sleeper provider coverage for NFL state, drafts, rosters, users, leagues, and player metadata used by the current dashboards.
 - Built-in draft analysis defaults for team point engines, depth charts, player contribution, and rising usage.
@@ -67,7 +67,7 @@ export const fantasyConfig = {
 } as const
 ```
 
-Configured leagues auto-load when the site opens. The main layout is a command center shell with top-bar tabs for each league and a read-only NFL state badge. League, roster, and draft data load first; the larger Sleeper player pool fills in afterward for draft recommendations. Each selected league dashboard focuses on the Team Tracker and Draft Room modules. When one of the configured usernames owns a team in a league, the dashboard narrows to that team.
+Configured leagues auto-load when the site opens. The main layout is a command center shell with top-bar tabs for each league and a read-only NFL state badge. League, roster, and draft data load first; the larger Sleeper player pool fills in afterward for draft recommendations. Each selected league dashboard focuses on the Locker Room and Draft Room modules. When one of the configured usernames owns a team in a league, the dashboard narrows to that team.
 
 When Sleeper marks a draft as active, the Draft Room can refresh draft metadata and picks without reloading the full player pool. The `Phase` chip can manually check Sleeper for draft status before polling begins; completed drafts render the chip as read-only.
 
@@ -81,7 +81,7 @@ The week badge uses Sleeper's `state/nfl` endpoint. If Sleeper state is unavaila
 ## Module Structure
 
 - `src/modules/draft/DraftPickHelperModule.tsx`: Sleeper-style draft room grouped by position, with best available targets, latest picks, live sync status, and recommendation details.
-- `src/modules/team-tracker/TeamTrackerModule.tsx`: selected-team roster tracker with starters, bench, recent team picks, weak spots, value metrics, and click-to-open player insights.
+- `src/modules/locker-room/LockerRoomModule.tsx`: Locker Room selected-team roster tracker with starters, bench, recent team picks, weak spots, value metrics, and click-to-open player insights.
 - `src/components/dashboard/`: shared UI primitives used across modules.
 
 ## UI Direction

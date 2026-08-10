@@ -18,7 +18,7 @@ import {
 import type { DraftSyncStatus } from '../../domain/draftSync'
 import type { NormalizedLeagueData } from '../../domain/types'
 import { DraftPickHelperModule } from '../../modules/draft'
-import { TeamTrackerModule } from '../../modules/team-tracker/TeamTrackerModule'
+import { LockerRoomModule } from '../../modules/locker-room/LockerRoomModule'
 import { buildStrategyContext } from '../../strategy/teamOpportunity'
 
 export interface LeagueDashboardProps {
@@ -93,10 +93,10 @@ export function LeagueDashboard({
 
   return (
     <article className="league-dashboard">
-      <TeamTrackerModule
+      <LockerRoomModule
         data={data}
-        isMinimized={minimizedModules.teamTracker}
-        onToggleMinimized={() => onToggleModule('teamTracker')}
+        isMinimized={minimizedModules.lockerRoom}
+        onToggleMinimized={() => onToggleModule('lockerRoom')}
         roster={baseRoster}
         selectedTeamId={selectedTeamId}
       />

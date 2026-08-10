@@ -25,28 +25,28 @@ const LINEUP_SLOT_ORDER: LineupSlotType[] = [
 
 export type LineupSlotType = Position | 'FLEX' | 'SUPER_FLEX'
 
-export interface TeamTrackerPlayer {
+export interface LockerRoomPlayer {
   id: string
   isDraftAddition: boolean
   player: Player
   primaryPosition: Position
 }
 
-export interface TeamTrackerLineupSlot {
+export interface LockerRoomLineupSlot {
   id: string
-  player?: TeamTrackerPlayer
+  player?: LockerRoomPlayer
   slot: LineupSlotType
 }
 
-export interface TeamTrackerViewModel {
-  bench: TeamTrackerPlayer[]
-  draftedAdditions: TeamTrackerPlayer[]
-  lineupSlots: TeamTrackerLineupSlot[]
-  taxi: TeamTrackerPlayer[]
+export interface LockerRoomViewModel {
+  bench: LockerRoomPlayer[]
+  draftedAdditions: LockerRoomPlayer[]
+  lineupSlots: LockerRoomLineupSlot[]
+  taxi: LockerRoomPlayer[]
   totalPlayers: number
 }
 
-export function buildTeamTrackerViewModel({
+export function buildLockerRoomViewModel({
   draftPicks,
   leagueSettings,
   players,
@@ -58,7 +58,7 @@ export function buildTeamTrackerViewModel({
   players: Player[]
   roster: Roster | undefined
   selectedTeamId: string
-}): TeamTrackerViewModel {
+}): LockerRoomViewModel {
   const playersById = new Map(players.map((player) => [player.id, player]))
   const rosterPlayerIds = roster?.playerIds ?? []
   const taxiPlayerIds = roster?.taxiPlayerIds ?? []
@@ -72,7 +72,7 @@ export function buildTeamTrackerViewModel({
     new Set([...rosterPlayerIds, ...taxiPlayerIds, ...draftAdditionIds])
   )
 
-  const trackedPlayers = trackedPlayerIds.flatMap<TeamTrackerPlayer>(
+  const trackedPlayers = trackedPlayerIds.flatMap<LockerRoomPlayer>(
     (playerId) => {
       const player = playersById.get(playerId)
       const primaryPosition = player
@@ -122,7 +122,7 @@ export function buildTeamTrackerViewModel({
   }
 }
 
-function buildLineupSlots(settings: LeagueSettings): TeamTrackerLineupSlot[] {
+function buildLineupSlots(settings: LeagueSettings): LockerRoomLineupSlot[] {
   return LINEUP_SLOT_ORDER.flatMap((slot) => {
     const slotCount = settings.rosterSlots[slot] ?? 0
 
@@ -134,10 +134,10 @@ function buildLineupSlots(settings: LeagueSettings): TeamTrackerLineupSlot[] {
 }
 
 function assignLineupSlots(
-  slots: TeamTrackerLineupSlot[],
+  slots: LockerRoomLineupSlot[],
   starterPlayerIds: string[],
-  trackedPlayers: TeamTrackerPlayer[]
-): TeamTrackerLineupSlot[] {
+  trackedPlayers: LockerRoomPlayer[]
+): LockerRoomLineupSlot[] {
   const playersById = new Map(
     trackedPlayers.map((player) => [player.id, player])
   )
@@ -161,9 +161,9 @@ function assignLineupSlots(
 }
 
 function findOpenSlot(
-  slots: TeamTrackerLineupSlot[],
-  player: TeamTrackerPlayer
-): TeamTrackerLineupSlot | undefined {
+  slots: LockerRoomLineupSlot[],
+  player: LockerRoomPlayer
+): LockerRoomLineupSlot | undefined {
   return (
     slots.find(
       (slot) => !slot.player && slot.slot === player.primaryPosition
