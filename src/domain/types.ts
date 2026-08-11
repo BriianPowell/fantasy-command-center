@@ -52,6 +52,7 @@ export interface Roster {
   teamId: string
   playerIds: string[]
   starters: string[]
+  reservePlayerIds?: string[]
   taxiPlayerIds?: string[]
 }
 

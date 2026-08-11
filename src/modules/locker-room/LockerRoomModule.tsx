@@ -18,7 +18,10 @@ import {
 import './lockerRoom.css'
 import { dashboardModuleLabels } from '../../components/dashboard/dashboardTypes'
 import { ModuleTrimToggle } from '../../components/dashboard/ModuleTrimToggle'
-import { getRecentDraftPicks } from '../../domain/draftPickUtils'
+import {
+  getDraftPicksForRoster,
+  sortDraftPicks,
+} from '../../domain/draftPickUtils'
 import type { NormalizedLeagueData, Roster } from '../../domain/types'
 
 export interface LockerRoomModuleProps {
@@ -38,10 +41,10 @@ export function LockerRoomModule({
 }: LockerRoomModuleProps) {
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | undefined>()
   const selectedTeam = data.teams.find((team) => team.id === selectedTeamId)
-  const teamPicks = getRecentDraftPicks(data.draft?.picks ?? [], {
-    limit: 6,
-    rosterId: selectedTeamId,
-  })
+  const teamPicks = sortDraftPicks(
+    getDraftPicksForRoster(data.draft?.picks ?? [], selectedTeamId),
+    'oldest_first'
+  )
   const scoringLabel = formatScoringType(data.league.settings.scoringType)
   const tracker = buildViewModel({
     draftPicks: data.draft?.picks ?? [],
@@ -56,6 +59,7 @@ export function LockerRoomModule({
     lineupSlots: tracker.lineupSlots,
     picks: teamPicks,
     players: data.players,
+    reserve: tracker.reserve,
     taxi: tracker.taxi,
   })
   const positionValueGaps = buildPositionValueGaps({
@@ -155,13 +159,21 @@ export function LockerRoomModule({
             title="Bench"
             weakPositions={weakPositions}
           />
-          <div
-            className={
-              tracker.taxi.length
-                ? 'team-roster-side-stack has-taxi'
-                : 'team-roster-side-stack'
-            }
-          >
+          <div className="team-roster-side-stack">
+            {tracker.reserve.length ? (
+              <RosterSection
+                baselineValue={teamValue.averageValue}
+                emptyText="No IR players mapped yet."
+                insightSide="left"
+                onClosePlayerInsight={() => setSelectedPlayerId(undefined)}
+                onPlayerSelect={toggleSelectedPlayer}
+                players={tracker.reserve}
+                roleLabel="IR"
+                selectedPlayerId={selectedPlayerId}
+                title="IR"
+                weakPositions={weakPositions}
+              />
+            ) : null}
             {tracker.taxi.length ? (
               <RosterSection
                 baselineValue={teamValue.averageValue}

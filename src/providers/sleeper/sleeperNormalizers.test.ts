@@ -50,12 +50,14 @@ describe('normalizeRoster', () => {
     expect(
       normalizeRoster({
         players: ['player-1', 'player-2'],
+        reserve: ['player-4'],
         roster_id: 1,
         starters: ['player-1'],
         taxi: ['player-3'],
       })
     ).toEqual({
       playerIds: ['player-1', 'player-2'],
+      reservePlayerIds: ['player-4'],
       starters: ['player-1'],
       taxiPlayerIds: ['player-3'],
       teamId: '1',

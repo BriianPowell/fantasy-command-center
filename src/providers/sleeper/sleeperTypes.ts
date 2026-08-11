@@ -25,6 +25,7 @@ export interface SleeperRoster {
   roster_id: number
   owner_id?: string
   players?: string[]
+  reserve?: string[] | null
   starters?: string[]
   taxi?: string[]
 }

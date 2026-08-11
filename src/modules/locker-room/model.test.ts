@@ -101,17 +101,19 @@ describe('buildViewModel', () => {
     expect(viewModel.totalPlayers).toBe(2)
   })
 
-  it('separates taxi squad players from bench players', () => {
+  it('separates reserve and taxi squad players from bench players', () => {
     const starter = makePlayer('starter-rb', 'RB')
     const benchPlayer = makePlayer('bench-qb', 'QB')
+    const reservePlayer = makePlayer('reserve-wr', 'WR')
     const taxiPlayer = makePlayer('taxi-wr', 'WR')
 
     const viewModel = buildViewModel({
       draftPicks: [],
       leagueSettings,
-      players: [starter, benchPlayer, taxiPlayer],
+      players: [starter, benchPlayer, reservePlayer, taxiPlayer],
       roster: {
-        playerIds: [starter.id, benchPlayer.id],
+        playerIds: [starter.id, benchPlayer.id, reservePlayer.id],
+        reservePlayerIds: [reservePlayer.id],
         starters: [starter.id],
         taxiPlayerIds: [taxiPlayer.id],
         teamId: 'team-1',
@@ -120,8 +122,11 @@ describe('buildViewModel', () => {
     })
 
     expect(viewModel.bench.map((player) => player.id)).toEqual([benchPlayer.id])
+    expect(viewModel.reserve.map((player) => player.id)).toEqual([
+      reservePlayer.id,
+    ])
     expect(viewModel.taxi.map((player) => player.id)).toEqual([taxiPlayer.id])
-    expect(viewModel.totalPlayers).toBe(3)
+    expect(viewModel.totalPlayers).toBe(4)
   })
 
   it('groups bench players by position while preserving roster order within each position', () => {

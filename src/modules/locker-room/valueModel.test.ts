@@ -64,10 +64,35 @@ describe('buildTeamValueSnapshot', () => {
     expect(snapshot.benchValue).toBe(53)
     expect(snapshot.totalValue).toBe(130)
     expect(snapshot.draftedAdditionsValue).toBe(69)
+    expect(snapshot.reserveValue).toBe(0)
     expect(snapshot.averageValue).toBe(65)
     expect(snapshot.starterBenchDelta).toBe(24)
     expect(snapshot.latestPickValue).toBe(53)
     expect(snapshot.latestPickDelta).toBe(-12)
+  })
+
+  it('includes reserve players in total roster value without counting them as bench value', () => {
+    const starter = makePlayer('starter', 1)
+    const reserve = makePlayer('reserve', 7)
+
+    const snapshot = buildTeamValueSnapshot({
+      bench: [],
+      draftedAdditions: [],
+      lineupSlots: [
+        {
+          id: 'RB-1',
+          player: makeTrackedPlayer(starter),
+          slot: 'RB',
+        },
+      ],
+      picks: [],
+      players: [starter, reserve],
+      reserve: [makeTrackedPlayer(reserve)],
+    })
+
+    expect(snapshot.benchValue).toBe(0)
+    expect(snapshot.reserveValue).toBe(61)
+    expect(snapshot.totalValue).toBe(138)
   })
 })
 

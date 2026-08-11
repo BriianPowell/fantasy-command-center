@@ -166,22 +166,24 @@
 }
 
 .team-roster-side-stack {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 0.8rem;
-  grid-template-rows: minmax(0, 1fr);
   height: 100%;
   min-width: 0;
   min-height: 0;
 }
 
-.team-roster-side-stack.has-taxi {
-  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+.team-roster-side-stack > .team-roster-section {
+  align-content: start;
+  display: grid;
+  flex: 0 0 auto;
+  grid-template-rows: auto auto;
+  min-height: 0;
 }
 
-.team-roster-side-stack > .team-roster-section {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  min-height: 0;
+.team-roster-side-stack > .team-roster-section:last-child {
+  flex: 1 1 auto;
 }
 
 .team-roster-side-stack .team-player-list {

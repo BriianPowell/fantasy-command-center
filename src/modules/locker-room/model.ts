@@ -55,6 +55,7 @@ export interface ViewModel {
   bench: TrackedPlayer[]
   draftedAdditions: TrackedPlayer[]
   lineupSlots: LineupSlot[]
+  reserve: TrackedPlayer[]
   taxi: TrackedPlayer[]
   totalPlayers: number
 }
@@ -74,6 +75,8 @@ export function buildViewModel({
 }): ViewModel {
   const playersById = new Map(players.map((player) => [player.id, player]))
   const rosterPlayerIds = roster?.playerIds ?? []
+  const reservePlayerIds = roster?.reservePlayerIds ?? []
+  const reservePlayerIdSet = new Set(reservePlayerIds)
   const taxiPlayerIds = roster?.taxiPlayerIds ?? []
   const taxiPlayerIdSet = new Set(taxiPlayerIds)
   const draftAdditionIds = getDraftedPlayerIdsForRoster(
@@ -82,7 +85,12 @@ export function buildViewModel({
   )
   const draftAdditionIdSet = new Set(draftAdditionIds)
   const trackedPlayerIds = Array.from(
-    new Set([...rosterPlayerIds, ...taxiPlayerIds, ...draftAdditionIds])
+    new Set([
+      ...rosterPlayerIds,
+      ...reservePlayerIds,
+      ...taxiPlayerIds,
+      ...draftAdditionIds,
+    ])
   )
 
   const trackedPlayers = trackedPlayerIds.flatMap<TrackedPlayer>((playerId) => {
@@ -115,11 +123,16 @@ export function buildViewModel({
   const assignedStarterIds = new Set(
     lineupSlots.flatMap((slot) => (slot.player ? [slot.player.id] : []))
   )
+  const reserve = sortBenchPlayers(
+    trackedPlayers.filter((player) => reservePlayerIdSet.has(player.id))
+  )
   const taxi = trackedPlayers.filter((player) => taxiPlayerIdSet.has(player.id))
   const bench = sortBenchPlayers(
     trackedPlayers.filter(
       (player) =>
-        !assignedStarterIds.has(player.id) && !taxiPlayerIdSet.has(player.id)
+        !assignedStarterIds.has(player.id) &&
+        !reservePlayerIdSet.has(player.id) &&
+        !taxiPlayerIdSet.has(player.id)
     )
   )
   const draftedAdditions = trackedPlayers.filter(
@@ -130,6 +143,7 @@ export function buildViewModel({
     bench,
     draftedAdditions,
     lineupSlots,
+    reserve,
     taxi,
     totalPlayers: trackedPlayers.length,
   }

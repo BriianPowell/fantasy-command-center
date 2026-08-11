@@ -67,10 +67,18 @@ const leagueData: NormalizedLeagueData = {
       providerPlayerId: 'player-3',
       searchRank: 15,
     },
+    {
+      fullName: 'IR Player',
+      id: 'player-4',
+      positions: ['RB'],
+      providerPlayerId: 'player-4',
+      searchRank: 20,
+    },
   ],
   rosters: [
     {
-      playerIds: ['player-1'],
+      playerIds: ['player-1', 'player-4'],
+      reservePlayerIds: ['player-4'],
       starters: ['player-1'],
       taxiPlayerIds: ['player-3'],
       teamId: 'team-1',
@@ -107,9 +115,11 @@ describe('LockerRoomModule', () => {
       screen.getByRole('heading', { name: 'Starters' })
     ).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Bench' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'IR' })).toBeInTheDocument()
     expect(
       screen.getByRole('heading', { name: 'Taxi Squad' })
     ).toBeInTheDocument()
+    expect(screen.getByText('IR Player')).toBeInTheDocument()
     expect(screen.getByText('Taxi Player')).toBeInTheDocument()
     const weakSpotsSummary = screen.getByLabelText('Position weak spots')
     expect(within(weakSpotsSummary).getByText('Weak spots')).toBeInTheDocument()
@@ -189,6 +199,26 @@ describe('LockerRoomModule', () => {
     expect(insightPanel).toBeInTheDocument()
     expect(
       within(insightPanel as HTMLElement).getByText('Taxi Squad')
+    ).toBeInTheDocument()
+  })
+
+  it('labels IR player insights with the IR role', () => {
+    render(
+      <LockerRoomModule
+        data={leagueData}
+        isMinimized={false}
+        onToggleMinimized={vi.fn()}
+        roster={leagueData.rosters[0]}
+        selectedTeamId="team-1"
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /IR Player/ }))
+
+    const insightPanel = screen.getByText('Roster Insight').closest('aside')
+    expect(insightPanel).toBeInTheDocument()
+    expect(
+      within(insightPanel as HTMLElement).getByText('IR')
     ).toBeInTheDocument()
   })
 })

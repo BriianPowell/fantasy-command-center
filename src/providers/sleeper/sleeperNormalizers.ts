@@ -81,6 +81,7 @@ export function normalizeRoster(roster: SleeperRoster): Roster {
     teamId: String(roster.roster_id),
     playerIds: roster.players ?? [],
     starters: roster.starters ?? [],
+    ...(roster.reserve ? { reservePlayerIds: roster.reserve } : {}),
     ...(roster.taxi ? { taxiPlayerIds: roster.taxi } : {}),
   }
 }

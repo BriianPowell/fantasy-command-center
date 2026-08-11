@@ -191,7 +191,7 @@ export function RecentTeamPicksSection({
   return (
     <section className="team-roster-section">
       <header>
-        <h3>Recent Team Picks</h3>
+        <h3>Team Picks</h3>
         <span>{picks.length}</span>
       </header>
       <div className="team-pick-list">

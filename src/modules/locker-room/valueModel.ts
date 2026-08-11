@@ -12,6 +12,7 @@ export interface TeamValueSnapshot {
   draftedAdditionsValue: number
   latestPickDelta?: number
   latestPickValue?: number
+  reserveValue: number
   starterBenchDelta: number
   starterValue: number
   taxiValue: number
@@ -49,6 +50,7 @@ export function buildTeamValueSnapshot({
   lineupSlots,
   picks,
   players,
+  reserve = [],
   taxi = [],
 }: {
   bench: TrackedPlayer[]
@@ -56,14 +58,16 @@ export function buildTeamValueSnapshot({
   lineupSlots: LineupSlot[]
   picks: DraftPick[]
   players: Player[]
+  reserve?: TrackedPlayer[]
   taxi?: TrackedPlayer[]
 }): TeamValueSnapshot {
   const starters = lineupSlots.flatMap((slot) =>
     slot.player ? [slot.player] : []
   )
-  const rosterPlayers = [...starters, ...bench, ...taxi]
+  const rosterPlayers = [...starters, ...bench, ...reserve, ...taxi]
   const starterValue = sumPlayerValues(starters)
   const benchValue = sumPlayerValues(bench)
+  const reserveValue = sumPlayerValues(reserve)
   const taxiValue = sumPlayerValues(taxi)
   const totalValue = sumPlayerValues(rosterPlayers)
   const averageValue = rosterPlayers.length
@@ -86,6 +90,7 @@ export function buildTeamValueSnapshot({
         ? undefined
         : latestPickValue - averageValue,
     latestPickValue,
+    reserveValue,
     starterBenchDelta: starterValue - benchValue,
     starterValue,
     taxiValue,
