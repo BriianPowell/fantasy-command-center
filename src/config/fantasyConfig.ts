@@ -10,6 +10,7 @@ export const fantasyConfig = {
   } as Record<string, LeagueDraftModeConfig>,
   season: '2026',
   sleeperLeagueIds: [
+    '1392913983693918208',
     '1312240875861979136',
     '1357563614201933824',
     '1389723007303307266',
