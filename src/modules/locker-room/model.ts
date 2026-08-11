@@ -23,6 +23,19 @@ const LINEUP_SLOT_ORDER: LineupSlotType[] = [
   'DEF',
 ]
 
+const BENCH_POSITION_ORDER: Position[] = [
+  'QB',
+  'RB',
+  'WR',
+  'TE',
+  'K',
+  'DEF',
+  'DB',
+  'DL',
+  'LB',
+  'IDP',
+]
+
 export type LineupSlotType = Position | 'FLEX' | 'SUPER_FLEX'
 
 export interface TrackedPlayer {
@@ -103,9 +116,11 @@ export function buildViewModel({
     lineupSlots.flatMap((slot) => (slot.player ? [slot.player.id] : []))
   )
   const taxi = trackedPlayers.filter((player) => taxiPlayerIdSet.has(player.id))
-  const bench = trackedPlayers.filter(
-    (player) =>
-      !assignedStarterIds.has(player.id) && !taxiPlayerIdSet.has(player.id)
+  const bench = sortBenchPlayers(
+    trackedPlayers.filter(
+      (player) =>
+        !assignedStarterIds.has(player.id) && !taxiPlayerIdSet.has(player.id)
+    )
   )
   const draftedAdditions = trackedPlayers.filter(
     (player) => player.isDraftAddition
@@ -178,5 +193,17 @@ function findOpenSlot(
         slot.slot === 'SUPER_FLEX' &&
         canFillSuperFlexPosition(player.primaryPosition)
     )
+  )
+}
+
+function sortBenchPlayers(players: TrackedPlayer[]): TrackedPlayer[] {
+  const positionOrder = new Map(
+    BENCH_POSITION_ORDER.map((position, index) => [position, index])
+  )
+
+  return [...players].sort(
+    (a, b) =>
+      (positionOrder.get(a.primaryPosition) ?? Number.MAX_SAFE_INTEGER) -
+      (positionOrder.get(b.primaryPosition) ?? Number.MAX_SAFE_INTEGER)
   )
 }

@@ -123,4 +123,51 @@ describe('buildViewModel', () => {
     expect(viewModel.taxi.map((player) => player.id)).toEqual([taxiPlayer.id])
     expect(viewModel.totalPlayers).toBe(3)
   })
+
+  it('groups bench players by position while preserving roster order within each position', () => {
+    const starter = makePlayer('starter-rb', 'RB')
+    const wideReceiverOne = makePlayer('wide-receiver-one', 'WR')
+    const quarterback = makePlayer('quarterback', 'QB')
+    const tightEnd = makePlayer('tight-end', 'TE')
+    const runningBackOne = makePlayer('running-back-one', 'RB')
+    const wideReceiverTwo = makePlayer('wide-receiver-two', 'WR')
+    const runningBackTwo = makePlayer('running-back-two', 'RB')
+
+    const viewModel = buildViewModel({
+      draftPicks: [],
+      leagueSettings,
+      players: [
+        starter,
+        wideReceiverOne,
+        quarterback,
+        tightEnd,
+        runningBackOne,
+        wideReceiverTwo,
+        runningBackTwo,
+      ],
+      roster: {
+        playerIds: [
+          starter.id,
+          wideReceiverOne.id,
+          quarterback.id,
+          tightEnd.id,
+          runningBackOne.id,
+          wideReceiverTwo.id,
+          runningBackTwo.id,
+        ],
+        starters: [starter.id],
+        teamId: 'team-1',
+      },
+      selectedTeamId: 'team-1',
+    })
+
+    expect(viewModel.bench.map((player) => player.id)).toEqual([
+      quarterback.id,
+      runningBackOne.id,
+      runningBackTwo.id,
+      wideReceiverOne.id,
+      wideReceiverTwo.id,
+      tightEnd.id,
+    ])
+  })
 })
