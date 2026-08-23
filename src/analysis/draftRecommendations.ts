@@ -49,10 +49,14 @@ const DRAFT_CANDIDATE_LIMITS: Partial<Record<Position, number>> = {
 }
 
 interface RosterFit {
+  allRequiredPositionsFilled: boolean
   currentDepth: number
   primaryPosition: Position
+  remainingRosterSlots: number
   requiredSlots: number
+  superFlexSlots: number
   targetDepth: number
+  unfilledSpecialistSlots: number
 }
 
 export interface DraftRecommendationInput {
@@ -98,6 +102,7 @@ export function buildDraftRecommendations(
     draftCandidates,
     input.unavailablePlayerIds
   )
+  const draftProgress = getDraftProgress(input.draft, input.leagueSettings)
 
   const recommendations = draftCandidates.map((player) => {
     const ranking = rankingByPlayer.get(player.id)
@@ -110,7 +115,7 @@ export function buildDraftRecommendations(
       input.roster,
       input.leagueSettings
     )
-    const needScore = scoreNeed(player, rosterFit)
+    const needScore = scoreNeed(player, rosterFit, draftProgress)
     const scarcityScore = scoreScarcity(
       player,
       remainingByPosition,
@@ -177,25 +182,42 @@ export function buildDraftRecommendations(
 
   return addAvailablePlayerContext(
     recommendations,
-    getDraftTimingContext(input)
+    getDraftTimingContext(input),
+    buildDraftRoomContext(input.draft, input.leagueSettings, playersById)
   ).sort((a, b) => b.score - a.score)
 }
 
 interface AvailablePlayerContext {
+  currentRound?: number
   dropOffAfter?: number
+  overallDropOffAfter?: number
+  overallRank?: number
   picksUntilNextPick?: number
   positionRank: number
+  positionRun?: DraftRoomPositionRun
   tierPlayersRemaining: number
   tierUrgency?: TierUrgency
   valueTier: number
 }
 
+interface DraftRoomContext {
+  positionRuns: Map<Position, DraftRoomPositionRun>
+}
+
+interface DraftRoomPositionRun {
+  count: number
+  pressure: 'active' | 'watch'
+  window: number
+}
+
 function addAvailablePlayerContext(
   recommendations: DraftRecommendation[],
-  draftTimingContext: DraftTimingContext
+  draftTimingContext: DraftTimingContext,
+  draftRoomContext: DraftRoomContext
 ): DraftRecommendation[] {
   const contextsByPlayerId = new Map<string, AvailablePlayerContext>()
   const recommendationsByPosition = new Map<Position, DraftRecommendation[]>()
+  const overallContexts = getOverallBoardContexts(recommendations)
 
   for (const recommendation of recommendations) {
     const position = getPrimaryPosition(recommendation.player.positions)
@@ -210,7 +232,7 @@ function addAvailablePlayerContext(
     ])
   }
 
-  for (const positionRecommendations of recommendationsByPosition.values()) {
+  for (const [position, positionRecommendations] of recommendationsByPosition) {
     const sortedRecommendations = [...positionRecommendations].sort(
       (a, b) => b.valueScore - a.valueScore
     )
@@ -238,6 +260,8 @@ function addAvailablePlayerContext(
       const context = {
         ...(dropOffAfter !== undefined ? { dropOffAfter } : {}),
         ...draftTimingContext,
+        ...overallContexts.get(recommendation.player.id),
+        positionRun: draftRoomContext.positionRuns.get(position),
         positionRank: index + 1,
         tierPlayersRemaining: 0,
         valueTier,
@@ -288,12 +312,24 @@ function buildContextualRecommendationInsight(
 ): string {
   const position = getPrimaryPosition(recommendation.player.positions)
 
-  if (position && context.tierUrgency === 'take_now') {
-    return `${recommendation.insight} Only ${context.tierPlayersRemaining} ${position} option${context.tierPlayersRemaining === 1 ? '' : 's'} remain in this value tier, and your next pick is estimated ${context.picksUntilNextPick} picks away.`
+  if (position && context.positionRun?.pressure === 'active') {
+    return `${recommendation.insight} ${context.positionRun.count} of the last ${context.positionRun.window} picks were ${position}, so the room is actively attacking this position.`
   }
 
-  if (position && context.tierUrgency === 'safe_to_wait') {
-    return `${recommendation.insight} This ${position} tier has enough similar options left that you may be able to wait.`
+  if (
+    position &&
+    context.overallDropOffAfter !== undefined &&
+    context.overallDropOffAfter >= 8 &&
+    context.overallRank === 1 &&
+    context.picksUntilNextPick !== undefined
+  ) {
+    return `${recommendation.insight} This player is near an overall board cliff with a ${Math.round(
+      context.overallDropOffAfter
+    )} point value drop after them.`
+  }
+
+  if (position && context.tierUrgency === 'take_now') {
+    return `${recommendation.insight} Only ${context.tierPlayersRemaining} ${position} option${context.tierPlayersRemaining === 1 ? '' : 's'} remain in this value tier, and your next pick is estimated ${context.picksUntilNextPick} picks away.`
   }
 
   if (
@@ -304,6 +340,10 @@ function buildContextualRecommendationInsight(
     return `${recommendation.insight} There is a ${Math.round(
       context.dropOffAfter
     )} point ${position} value drop after this tier.`
+  }
+
+  if (position && canShowSafeToWait(recommendation, context)) {
+    return `${recommendation.insight} This ${position} tier has enough similar options left that you may be able to wait.`
   }
 
   if (position && context.valueTier === 1 && context.positionRank <= 3) {
@@ -317,12 +357,23 @@ function buildContextualPickSuggestion(
   recommendation: DraftRecommendation,
   context: AvailablePlayerContext
 ): string {
-  if (context.tierUrgency === 'take_now') {
-    return 'Take now: tier may not return'
+  const position = getPrimaryPosition(recommendation.player.positions)
+
+  if (context.positionRun?.pressure === 'active' && position) {
+    return `Take now: ${position} run`
   }
 
-  if (context.tierUrgency === 'safe_to_wait') {
-    return 'Safe to wait'
+  if (
+    context.overallDropOffAfter !== undefined &&
+    context.overallDropOffAfter >= 8 &&
+    context.overallRank === 1 &&
+    context.picksUntilNextPick !== undefined
+  ) {
+    return 'Take value: board cliff'
+  }
+
+  if (context.tierUrgency === 'take_now') {
+    return 'Take now: tier may not return'
   }
 
   if (
@@ -333,7 +384,111 @@ function buildContextualPickSuggestion(
     return 'Beat tier drop'
   }
 
+  if (canShowSafeToWait(recommendation, context)) {
+    return 'Safe to wait'
+  }
+
   return recommendation.suggestion
+}
+
+function canShowSafeToWait(
+  recommendation: DraftRecommendation,
+  context: AvailablePlayerContext
+): boolean {
+  return (
+    context.tierUrgency === 'safe_to_wait' &&
+    context.currentRound !== undefined &&
+    context.currentRound > 3 &&
+    context.positionRun?.pressure !== 'watch' &&
+    recommendation.valueScore < 60
+  )
+}
+
+function getOverallBoardContexts(
+  recommendations: DraftRecommendation[]
+): Map<
+  string,
+  Pick<AvailablePlayerContext, 'overallDropOffAfter' | 'overallRank'>
+> {
+  const contexts = new Map<
+    string,
+    Pick<AvailablePlayerContext, 'overallDropOffAfter' | 'overallRank'>
+  >()
+  const sortedRecommendations = [...recommendations].sort(
+    (a, b) => b.valueScore - a.valueScore
+  )
+
+  sortedRecommendations.forEach((recommendation, index) => {
+    const nextRecommendation = sortedRecommendations[index + 1]
+    const overallDropOffAfter = nextRecommendation
+      ? recommendation.valueScore - nextRecommendation.valueScore
+      : undefined
+
+    contexts.set(recommendation.player.id, {
+      ...(overallDropOffAfter !== undefined ? { overallDropOffAfter } : {}),
+      overallRank: index + 1,
+    })
+  })
+
+  return contexts
+}
+
+function buildDraftRoomContext(
+  draft: DraftState | undefined,
+  leagueSettings: LeagueSettings,
+  playersById: Map<string, Player>
+): DraftRoomContext {
+  if (!draft) {
+    return {
+      positionRuns: new Map(),
+    }
+  }
+
+  const recentPickWindow = Math.min(Math.max(leagueSettings.teams, 6), 12)
+  const recentPositions = draft.picks
+    .filter((pick) => pick.playerId || pick.metadata?.position)
+    .sort((a, b) => a.pickNo - b.pickNo)
+    .slice(-recentPickWindow)
+    .map((pick) => {
+      if (pick.playerId) {
+        return (
+          getPrimaryPosition(playersById.get(pick.playerId)?.positions ?? []) ??
+          pick.metadata?.position
+        )
+      }
+
+      return pick.metadata?.position
+    })
+    .filter((position): position is Position => Boolean(position))
+  const positionCounts = new Map<Position, number>()
+
+  for (const position of recentPositions) {
+    positionCounts.set(position, (positionCounts.get(position) ?? 0) + 1)
+  }
+
+  const positionRuns = new Map<Position, DraftRoomPositionRun>()
+
+  for (const [position, count] of positionCounts) {
+    const share = count / Math.max(recentPositions.length, 1)
+
+    if (count >= 3 && share >= 0.34) {
+      positionRuns.set(position, {
+        count,
+        pressure: 'active',
+        window: recentPositions.length,
+      })
+    } else if (count >= 2 && share >= 0.25) {
+      positionRuns.set(position, {
+        count,
+        pressure: 'watch',
+        window: recentPositions.length,
+      })
+    }
+  }
+
+  return {
+    positionRuns,
+  }
 }
 
 function getDraftCandidates(
@@ -401,33 +556,90 @@ function getRosterFit(
   )
     ? (settings.rosterSlots.FLEX ?? 0)
     : 0
-  const targetDepth = requiredSlots + flexSlots + benchBuffer(primaryPosition)
+  const superFlexSlots = player.positions.some((position) =>
+    canFillSuperFlexPosition(position)
+  )
+    ? (settings.rosterSlots.SUPER_FLEX ?? 0)
+    : 0
+  const targetDepth =
+    requiredSlots + flexSlots + benchBuffer(primaryPosition, settings)
   const currentDepth = rosterCounts.get(primaryPosition) ?? 0
 
   return {
+    allRequiredPositionsFilled: areRequiredPositionsFilled(
+      rosterCounts,
+      settings
+    ),
     currentDepth,
     primaryPosition,
+    remainingRosterSlots: getRemainingRosterSlots(roster, settings),
     requiredSlots,
+    superFlexSlots,
     targetDepth,
+    unfilledSpecialistSlots: getUnfilledSpecialistSlots(rosterCounts, settings),
   }
 }
 
-function scoreNeed(player: Player, rosterFit: RosterFit | undefined): number {
+function scoreNeed(
+  player: Player,
+  rosterFit: RosterFit | undefined,
+  draftProgress: number | undefined
+): number {
+  const primaryPosition = getPrimaryPosition(player.positions)
+
   if (!rosterFit) {
+    if (primaryPosition === 'K' || primaryPosition === 'DEF') {
+      return draftProgress !== undefined && draftProgress >= 0.85 ? 18 : -12
+    }
+
     return 10
   }
 
-  const primaryPosition = getPrimaryPosition(player.positions)
+  if (primaryPosition === 'K' || primaryPosition === 'DEF') {
+    if (rosterFit.currentDepth >= rosterFit.requiredSlots) {
+      return -10
+    }
+
+    if (
+      rosterFit.unfilledSpecialistSlots > 0 &&
+      rosterFit.remainingRosterSlots <= rosterFit.unfilledSpecialistSlots
+    ) {
+      return 24
+    }
+
+    if (draftProgress !== undefined && draftProgress >= 0.85) {
+      return 18
+    }
+
+    return rosterFit.allRequiredPositionsFilled ? 1 : -12
+  }
+
+  if (
+    primaryPosition === 'QB' &&
+    (rosterFit.requiredSlots > 0 || rosterFit.currentDepth > 0) &&
+    rosterFit.currentDepth >= rosterFit.requiredSlots &&
+    rosterFit.superFlexSlots === 0
+  ) {
+    return -12
+  }
 
   if (rosterFit.currentDepth === 0 && rosterFit.requiredSlots > 0) {
     return 35
+  }
+
+  if (
+    !rosterFit.allRequiredPositionsFilled &&
+    rosterFit.requiredSlots > 0 &&
+    rosterFit.currentDepth >= rosterFit.requiredSlots
+  ) {
+    return 4
   }
 
   if (rosterFit.currentDepth < rosterFit.targetDepth) {
     return 22 - rosterFit.currentDepth * 3
   }
 
-  return primaryPosition === 'K' || primaryPosition === 'DEF' ? -10 : 3
+  return 3
 }
 
 function countRosterPositions(
@@ -446,12 +658,81 @@ function countRosterPositions(
   return counts
 }
 
-function benchBuffer(position: string): number {
+function getDraftProgress(
+  draft: DraftState | undefined,
+  leagueSettings: LeagueSettings
+): number | undefined {
+  if (!draft || leagueSettings.teams <= 0 || draft.rounds <= 0) {
+    return undefined
+  }
+
+  const totalPicks = draft.rounds * leagueSettings.teams
+  const completedPicks =
+    draft.currentPick !== undefined
+      ? Math.max(0, draft.currentPick - 1)
+      : draft.picks.length
+
+  return Math.min(completedPicks / totalPicks, 1)
+}
+
+function getRemainingRosterSlots(
+  roster: Roster,
+  settings: LeagueSettings
+): number {
+  return Math.max(0, getTotalRosterSlots(settings) - roster.playerIds.length)
+}
+
+function getTotalRosterSlots(settings: LeagueSettings): number {
+  return Object.entries(settings.rosterSlots).reduce(
+    (total, [, slots]) => total + Math.max(0, slots),
+    0
+  )
+}
+
+function getUnfilledSpecialistSlots(
+  rosterCounts: Map<string, number>,
+  settings: LeagueSettings
+): number {
+  return (
+    Math.max(0, (settings.rosterSlots.K ?? 0) - (rosterCounts.get('K') ?? 0)) +
+    Math.max(
+      0,
+      (settings.rosterSlots.DEF ?? 0) - (rosterCounts.get('DEF') ?? 0)
+    )
+  )
+}
+
+function areRequiredPositionsFilled(
+  rosterCounts: Map<string, number>,
+  settings: LeagueSettings
+): boolean {
+  return Object.entries(settings.rosterSlots).every(([position, slots]) => {
+    if (slots <= 0 || position === 'BN' || position === 'FLEX') {
+      return true
+    }
+
+    if (position === 'SUPER_FLEX') {
+      const superFlexEligibleCount = (['QB', 'RB', 'WR', 'TE'] as Position[])
+        .map((superFlexPosition) => rosterCounts.get(superFlexPosition) ?? 0)
+        .reduce((total, count) => total + count, 0)
+
+      return superFlexEligibleCount >= slots
+    }
+
+    return (rosterCounts.get(position) ?? 0) >= slots
+  })
+}
+
+function benchBuffer(position: string, settings: LeagueSettings): number {
   if (position === 'RB' || position === 'WR') {
     return 2
   }
 
-  if (position === 'QB' || position === 'TE') {
+  if (position === 'QB') {
+    return (settings.rosterSlots.SUPER_FLEX ?? 0) > 0 ? 1 : 0
+  }
+
+  if (position === 'TE') {
     return 1
   }
 

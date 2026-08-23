@@ -189,7 +189,7 @@ export function RecentTeamPicksSection({
   const playersById = new Map(players.map((player) => [player.id, player]))
 
   return (
-    <section className="team-roster-section">
+    <section className="team-roster-section team-picks-section">
       <header>
         <h3>Team Picks</h3>
         <span>{picks.length}</span>

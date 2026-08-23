@@ -1,4 +1,5 @@
 import { getDraftedPlayerIdsForRoster } from '../../domain/draftPickUtils'
+import { scoreDraftPlayerValue } from '../../domain/playerValueUtils'
 import {
   canFillFlexPosition,
   canFillSuperFlexPosition,
@@ -115,10 +116,14 @@ export function buildViewModel({
     ]
   })
 
+  const lineupEligiblePlayers = trackedPlayers.filter(
+    (player) =>
+      !reservePlayerIdSet.has(player.id) && !taxiPlayerIdSet.has(player.id)
+  )
   const lineupSlots = assignLineupSlots(
     buildLineupSlots(leagueSettings),
     roster?.starters ?? [],
-    trackedPlayers
+    lineupEligiblePlayers
   )
   const assignedStarterIds = new Set(
     lineupSlots.flatMap((slot) => (slot.player ? [slot.player.id] : []))
@@ -177,6 +182,24 @@ function assignLineupSlots(
       continue
     }
 
+    const slot = findOpenSlot(assignedSlots, player)
+
+    if (slot) {
+      slot.player = player
+    }
+  }
+
+  const assignedPlayerIds = new Set(
+    assignedSlots.flatMap((slot) => (slot.player ? [slot.player.id] : []))
+  )
+  const fillCandidates = [...trackedPlayers]
+    .filter((player) => !assignedPlayerIds.has(player.id))
+    .sort(
+      (a, b) =>
+        scoreDraftPlayerValue(b.player) - scoreDraftPlayerValue(a.player)
+    )
+
+  for (const player of fillCandidates) {
     const slot = findOpenSlot(assignedSlots, player)
 
     if (slot) {

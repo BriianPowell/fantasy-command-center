@@ -53,9 +53,12 @@ describe('buildViewModel', () => {
       viewModel.lineupSlots.find((slot) => slot.slot === 'RB')?.player?.id
     ).toBe(runningBack.id)
     expect(
+      viewModel.lineupSlots.find((slot) => slot.slot === 'QB')?.player?.id
+    ).toBe(quarterback.id)
+    expect(
       viewModel.lineupSlots.find((slot) => slot.slot === 'FLEX')?.player?.id
     ).toBe(wideReceiver.id)
-    expect(viewModel.bench.map((player) => player.id)).toEqual([quarterback.id])
+    expect(viewModel.bench.map((player) => player.id)).toEqual([])
     expect(viewModel.totalPlayers).toBe(3)
   })
 
@@ -95,9 +98,10 @@ describe('buildViewModel', () => {
         isDraftAddition: true,
       }),
     ])
-    expect(viewModel.bench.map((player) => player.id)).toEqual([
-      draftedWideReceiver.id,
-    ])
+    expect(
+      viewModel.lineupSlots.find((slot) => slot.slot === 'FLEX')?.player?.id
+    ).toBe(draftedWideReceiver.id)
+    expect(viewModel.bench.map((player) => player.id)).toEqual([])
     expect(viewModel.totalPlayers).toBe(2)
   })
 
@@ -121,7 +125,10 @@ describe('buildViewModel', () => {
       selectedTeamId: 'team-1',
     })
 
-    expect(viewModel.bench.map((player) => player.id)).toEqual([benchPlayer.id])
+    expect(
+      viewModel.lineupSlots.find((slot) => slot.slot === 'QB')?.player?.id
+    ).toBe(benchPlayer.id)
+    expect(viewModel.bench.map((player) => player.id)).toEqual([])
     expect(viewModel.reserve.map((player) => player.id)).toEqual([
       reservePlayer.id,
     ])
@@ -140,7 +147,14 @@ describe('buildViewModel', () => {
 
     const viewModel = buildViewModel({
       draftPicks: [],
-      leagueSettings,
+      leagueSettings: {
+        ...leagueSettings,
+        rosterSlots: {
+          ...leagueSettings.rosterSlots,
+          FLEX: 0,
+          QB: 0,
+        },
+      },
       players: [
         starter,
         wideReceiverOne,

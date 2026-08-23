@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { type CSSProperties, useLayoutEffect, useRef, useState } from 'react'
 import { buildViewModel } from './model'
 import {
   LineupSection,
@@ -40,6 +40,10 @@ export function LockerRoomModule({
   selectedTeamId,
 }: LockerRoomModuleProps) {
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | undefined>()
+  const lineupColumnRef = useRef<HTMLDivElement>(null)
+  const [lineupColumnHeight, setLineupColumnHeight] = useState<
+    number | undefined
+  >()
   const selectedTeam = data.teams.find((team) => team.id === selectedTeamId)
   const teamPicks = sortDraftPicks(
     getDraftPicksForRoster(data.draft?.picks ?? [], selectedTeamId),
@@ -77,6 +81,35 @@ export function LockerRoomModule({
     players: data.players,
     weakPositions,
   })
+  const lineupColumnStyle = {
+    ...(lineupColumnHeight
+      ? { '--lineup-column-height': `${lineupColumnHeight}px` }
+      : {}),
+  } as CSSProperties
+  useLayoutEffect(() => {
+    const lineupColumn = lineupColumnRef.current
+
+    if (!lineupColumn) {
+      return
+    }
+
+    const measuredLineupColumn = lineupColumn
+
+    function updateLineupColumnHeight() {
+      const measuredHeight = Math.ceil(
+        measuredLineupColumn.getBoundingClientRect().height
+      )
+
+      setLineupColumnHeight(measuredHeight)
+    }
+
+    updateLineupColumnHeight()
+
+    const resizeObserver = new ResizeObserver(updateLineupColumnHeight)
+    resizeObserver.observe(measuredLineupColumn)
+
+    return () => resizeObserver.disconnect()
+  }, [tracker.lineupSlots.length])
   function toggleSelectedPlayer(playerId: string) {
     setSelectedPlayerId((current) =>
       current === playerId ? undefined : playerId
@@ -139,16 +172,18 @@ export function LockerRoomModule({
       </div>
 
       {!isMinimized ? (
-        <div className="team-roster-grid">
-          <LineupSection
-            baselineValue={teamValue.averageValue}
-            onClosePlayerInsight={() => setSelectedPlayerId(undefined)}
-            onPlayerSelect={toggleSelectedPlayer}
-            selectedPlayerId={selectedPlayerId}
-            slots={tracker.lineupSlots}
-            title="Starters"
-            weakPositions={weakPositions}
-          />
+        <div className="team-roster-grid" style={lineupColumnStyle}>
+          <div className="team-roster-measure" ref={lineupColumnRef}>
+            <LineupSection
+              baselineValue={teamValue.averageValue}
+              onClosePlayerInsight={() => setSelectedPlayerId(undefined)}
+              onPlayerSelect={toggleSelectedPlayer}
+              selectedPlayerId={selectedPlayerId}
+              slots={tracker.lineupSlots}
+              title="Starters"
+              weakPositions={weakPositions}
+            />
+          </div>
           <RosterSection
             baselineValue={teamValue.averageValue}
             emptyText="No bench players mapped yet."

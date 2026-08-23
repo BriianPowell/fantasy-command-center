@@ -1,6 +1,7 @@
 import type { DraftState, LeagueSettings } from '../domain/types'
 
 export interface DraftTimingContext {
+  currentRound?: number
   picksUntilNextPick?: number
 }
 
@@ -29,8 +30,13 @@ export function getDraftTimingContext({
     selectedTeamId,
     teams: leagueSettings.teams,
   })
+  const currentPick = draft.currentPick ?? draft.picks.length + 1
+  const currentRound = Math.ceil(currentPick / leagueSettings.teams)
 
-  return picksUntilNextPick !== undefined ? { picksUntilNextPick } : {}
+  return {
+    currentRound,
+    ...(picksUntilNextPick !== undefined ? { picksUntilNextPick } : {}),
+  }
 }
 
 export function getTierUrgency(
@@ -51,7 +57,7 @@ export function getTierUrgency(
     return 'take_now'
   }
 
-  if (context.tierPlayersRemaining >= context.picksUntilNextPick + 3) {
+  if (context.tierPlayersRemaining >= context.picksUntilNextPick + 5) {
     return 'safe_to_wait'
   }
 
