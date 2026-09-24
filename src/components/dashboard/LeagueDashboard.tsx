@@ -18,6 +18,7 @@ import {
 import type { DraftSyncStatus } from '../../domain/draftSync'
 import type { NormalizedLeagueData } from '../../domain/types'
 import { DraftRoomModule } from '../../modules/draft-room/DraftRoomModule'
+import { FilmRoomModule } from '../../modules/film-room/FilmRoomModule'
 import { LockerRoomModule } from '../../modules/locker-room/LockerRoomModule'
 import { buildStrategyContext } from '../../strategy/teamOpportunity'
 
@@ -98,6 +99,12 @@ export function LeagueDashboard({
         isMinimized={minimizedModules.lockerRoom}
         onToggleMinimized={() => onToggleModule('lockerRoom')}
         roster={baseRoster}
+        selectedTeamId={selectedTeamId}
+      />
+      <FilmRoomModule
+        data={data}
+        isMinimized={minimizedModules.filmRoom}
+        onToggleMinimized={() => onToggleModule('filmRoom')}
         selectedTeamId={selectedTeamId}
       />
       <DraftRoomModule

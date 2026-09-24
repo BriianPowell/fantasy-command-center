@@ -5,7 +5,13 @@ import { LeagueDashboard } from './components/dashboard/LeagueDashboard'
 import { TopBar } from './components/dashboard/TopBar'
 import { fantasyConfig } from './config/fantasyConfig'
 import { type DraftSyncStatus, mergeLeagueDraftState } from './domain/draftSync'
-import type { NflState, NormalizedLeagueData, Player } from './domain/types'
+import type {
+  NflState,
+  NormalizedLeagueData,
+  Player,
+  TrendingPlayer,
+  WeeklyLeagueData,
+} from './domain/types'
 import { loadNflTeamByeWeeks } from './providers/schedule/nflScheduleApi'
 import { SleeperProvider } from './providers/sleeper/SleeperProvider'
 import {
@@ -233,6 +239,32 @@ export function App() {
         `Loaded ${loadedLeagues.length} dashboard${loadedLeagues.length === 1 ? '' : 's'} without player metadata.`
       )
     }
+
+    const weeklyInsightsWeek =
+      nflStateResult.status === 'fulfilled'
+        ? resolveWeeklyInsightsWeek(nflStateResult.value)
+        : undefined
+
+    if (!weeklyInsightsWeek) {
+      return
+    }
+
+    const weeklyData = await loadWeeklyLeagueData(
+      loadedLeagues,
+      weeklyInsightsWeek
+    )
+
+    if (weeklyData.warnings.length) {
+      setErrors((current) => appendUniqueErrors(current, weeklyData.warnings))
+    }
+
+    setLeagues((current) =>
+      current.map((league) => {
+        const weekly = weeklyData.dataByLeagueId.get(league.league.id)
+
+        return weekly ? { ...league, weekly } : league
+      })
+    )
   }, [loadFreshPlayerMetadata])
 
   useEffect(() => {
@@ -361,6 +393,72 @@ function removeDraftSyncStatus(
 
 function appendUniqueError(errors: string[], nextError: string): string[] {
   return errors.includes(nextError) ? errors : [...errors, nextError]
+}
+
+function appendUniqueErrors(errors: string[], nextErrors: string[]): string[] {
+  return nextErrors.reduce(appendUniqueError, errors)
+}
+
+function resolveWeeklyInsightsWeek(nflState: NflState): number | undefined {
+  return nflState.displayWeek ?? nflState.week
+}
+
+async function loadWeeklyLeagueData(
+  leagues: NormalizedLeagueData[],
+  week: number
+): Promise<{
+  dataByLeagueId: Map<string, WeeklyLeagueData>
+  warnings: string[]
+}> {
+  const dataByLeagueId = new Map<string, WeeklyLeagueData>()
+  const warnings: string[] = []
+  let trendingAdds: TrendingPlayer[] = []
+
+  try {
+    trendingAdds = await sleeperProvider.loadTrendingPlayers('add', {
+      limit: 25,
+      lookbackHours: 24,
+    })
+  } catch (caughtError) {
+    warnings.push(`Trending adds: ${readError(caughtError)}`)
+  }
+
+  const leagueResults = await Promise.allSettled(
+    leagues.map(async (league) => {
+      const [matchups, transactions] = await Promise.all([
+        sleeperProvider.loadLeagueMatchups(league.league.id, week),
+        sleeperProvider.loadTransactions(league.league.id, week),
+      ])
+
+      return {
+        leagueId: league.league.id,
+        weekly: {
+          matchups,
+          transactions,
+          trendingAdds,
+          week,
+        },
+      }
+    })
+  )
+
+  leagueResults.forEach((result, index) => {
+    if (result.status === 'fulfilled') {
+      dataByLeagueId.set(result.value.leagueId, result.value.weekly)
+      return
+    }
+
+    warnings.push(
+      `${leagues[index]?.league.id ?? 'League'} weekly data: ${readError(
+        result.reason
+      )}`
+    )
+  })
+
+  return {
+    dataByLeagueId,
+    warnings,
+  }
 }
 
 async function enrichPlayersWithScheduleByeWeeks(

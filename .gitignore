@@ -7,3 +7,11 @@ coverage
 *.tsbuildinfo
 vite.config.d.ts
 vite.config.js
+
+# Vendor player-ranking data: FantasyPros/PFF terms restrict redistribution,
+# and this repo is public, so raw pulls and normalized artifacts stay local.
+# Only the READMEs and generated app artifacts under src/data/generated are tracked.
+/data/raw/*
+!/data/raw/README.md
+/data/model/*
+!/data/model/README.md

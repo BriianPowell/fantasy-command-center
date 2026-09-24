@@ -15,7 +15,12 @@
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "prepare": "husky",
-    "deploy": "npm run build && gh-pages -d dist"
+    "deploy": "npm run build && gh-pages -d dist",
+    "data:check": "node models/ingest/fantasypros/check-season.mjs",
+    "data:import": "node models/player-ranking/import-fantasypros.mjs",
+    "data:profiles": "node models/player-ranking/build-team-profiles.mjs",
+    "data:correlations": "node models/player-ranking/build-correlations.mjs",
+    "data:scores": "node models/player-ranking/build-production-scores.mjs"
   },
   "dependencies": {
     "react": "^19.2.8",

@@ -14,6 +14,17 @@ export default [
   ...tseslint.configs.recommended,
   prettier,
   {
+    files: ['models/**/*.mjs'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      globals: globals.node,
+      sourceType: 'module',
+    },
+    rules: {
+      'no-console': 'off',
+    },
+  },
+  {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
       ecmaVersion: 'latest',

@@ -105,6 +105,13 @@ export interface TrendingPlayer {
   count: number
 }
 
+export interface WeeklyLeagueData {
+  matchups: LeagueMatchup[]
+  transactions: LeagueTransaction[]
+  trendingAdds: TrendingPlayer[]
+  week: number
+}
+
 export interface DraftPick {
   pickNo: number
   round: number
@@ -177,4 +184,5 @@ export interface NormalizedLeagueData {
   rosters: Roster[]
   draft?: DraftState
   players: Player[]
+  weekly?: WeeklyLeagueData
 }

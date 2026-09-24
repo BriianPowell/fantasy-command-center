@@ -1,0 +1,101 @@
+.film-room-panel {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.film-room-header {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.film-room-header h2 {
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+  margin-bottom: 0;
+}
+
+.film-room-week {
+  background: var(--chip-bg);
+  border: 1px solid var(--chip-border);
+  border-radius: 999px;
+  color: var(--chip-text);
+  font-size: 0.76rem;
+  font-weight: 900;
+  padding: 0.35rem 0.65rem;
+}
+
+.film-room-grid {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.film-room-section {
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 1rem;
+  display: grid;
+  gap: 0.65rem;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+  padding: 0.8rem;
+}
+
+.film-room-section header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.film-room-section h3 {
+  font-size: 1rem;
+  margin-bottom: 0;
+}
+
+.film-room-section-body {
+  align-content: start;
+  display: grid;
+  gap: 0.5rem;
+  min-height: 0;
+}
+
+.film-room-section-body > p {
+  color: var(--text-muted);
+  font-weight: 800;
+  margin-bottom: 0;
+}
+
+.film-room-matchup-card {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.film-room-matchup-card span {
+  align-items: center;
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.85rem;
+  color: var(--text-muted);
+  display: flex;
+  font-size: 0.78rem;
+  font-weight: 800;
+  justify-content: space-between;
+  padding: 0.55rem 0.65rem;
+}
+
+.film-room-matchup-card strong {
+  color: #f8fafc;
+}
+
+.film-room-section .player-reference-tile {
+  min-height: 3.7rem;
+}
+
+@media (max-width: 980px) {
+  .film-room-grid {
+    grid-template-columns: 1fr;
+  }
+}

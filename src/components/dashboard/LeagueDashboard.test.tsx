@@ -126,6 +126,9 @@ describe('LeagueDashboard', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('Dynasty')).toBeInTheDocument()
     expect(screen.getByText('Full pool')).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Film Room' })
+    ).toBeInTheDocument()
     expect(screen.getAllByText('Drafted Rookie').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Veteran Target').length).toBeGreaterThan(0)
   })

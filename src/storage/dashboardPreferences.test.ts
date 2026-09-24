@@ -27,12 +27,14 @@ describe('dashboard preferences', () => {
     saveActiveDashboardId('league-1')
     saveMinimizedModules({
       draftRoom: true,
+      filmRoom: false,
       lockerRoom: false,
     })
 
     expect(loadActiveDashboardId(['league-1', 'league-2'])).toBe('league-1')
     expect(loadMinimizedModules()).toEqual({
       draftRoom: true,
+      filmRoom: false,
       lockerRoom: false,
     })
   })
