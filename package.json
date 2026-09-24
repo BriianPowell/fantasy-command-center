@@ -20,7 +20,8 @@
     "data:import": "node models/player-ranking/import-fantasypros.mjs",
     "data:profiles": "node models/player-ranking/build-team-profiles.mjs",
     "data:correlations": "node models/player-ranking/build-correlations.mjs",
-    "data:scores": "node models/player-ranking/build-production-scores.mjs"
+    "data:scores": "node models/player-ranking/build-production-scores.mjs",
+    "data:weights": "node models/player-ranking/build-production-weights.mjs"
   },
   "dependencies": {
     "react": "^19.2.8",

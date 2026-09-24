@@ -42,6 +42,7 @@ npm run data:import         # historical_player_seasons.json + ingest_manifest.j
 npm run data:profiles       # team_oline_profiles.json + team_dline_profiles.json
 npm run data:scores         # player_production_scores.json
 npm run data:correlations   # correlations.json, including the derived weights
+npm run data:weights        # production_weight_validation.json (re-validate before hand-updating POSITION_SPECS)
 ```
 
 Every script takes `--seasons 2024,2025` to narrow the run and `--source` to
@@ -65,14 +66,15 @@ beside the existing one rather than editing it.
 
 ## Artifacts
 
-| File                             | Produced by         | Contents                                              |
-| -------------------------------- | ------------------- | ----------------------------------------------------- |
-| `historical_player_seasons.json` | `data:import`       | `HistoricalPlayerSeason[]` for every player-season    |
-| `ingest_manifest.json`           | `data:import`       | Per-file validation status for the run                |
-| `team_oline_profiles.json`       | `data:profiles`     | Pass-protection and run-blocking scores, ranks, tiers |
-| `team_dline_profiles.json`       | `data:profiles`     | Pass-rush and takeaway scores, ranks, tiers           |
-| `player_production_scores.json`  | `data:scores`       | 0–100 production score per player-season              |
-| `correlations.json`              | `data:correlations` | Fitted relationships and the model weights they imply |
+| File                                | Produced by         | Contents                                                                |
+| ----------------------------------- | ------------------- | ----------------------------------------------------------------------- |
+| `historical_player_seasons.json`    | `data:import`       | `HistoricalPlayerSeason[]` for every player-season                      |
+| `ingest_manifest.json`              | `data:import`       | Per-file validation status for the run                                  |
+| `team_oline_profiles.json`          | `data:profiles`     | Pass-protection and run-blocking scores, ranks, tiers                   |
+| `team_dline_profiles.json`          | `data:profiles`     | Pass-rush and takeaway scores, ranks, tiers                             |
+| `player_production_scores.json`     | `data:scores`       | 0–100 production score per player-season                                |
+| `correlations.json`                 | `data:correlations` | Fitted relationships and the model weights they imply                   |
+| `production_weight_validation.json` | `data:weights`      | Per-metric next-season predictive validation and the weights it implies |
 
 ## How the scores are built
 
@@ -89,10 +91,24 @@ value instead of silently drifting from it. See `../lib/scoring.mjs` for the
 full explanation and a concrete example of the mismatch.
 
 **Production score.** Each player-season is ranked against its own position
-and season on per-game rates, then blended by weight (fantasy points per game
-carries the most, with the category stats beside it). Percentile ranks rather
+and season on per-game rates, then blended by weight. Percentile ranks rather
 than z-scores, so one 2,000-yard rusher can't compress everyone else. Players
 below a games threshold are reported but kept out of the percentile pool.
+
+The weights themselves are validated, not hand-picked: `data:weights` joins
+every qualified player-season to his own next season and tests whether each
+category metric (rushing yards/g, target share, ...) explains variance in
+that NEXT season beyond what fantasy points per game already does, using
+leave-one-transition-out cross-validation gated the same way `data:correlations`
+gates its relationships. The real result is a genuine surprise — FPTS/G alone
+already captures 97–99.5% of a position's next-season predictive power, and
+no category metric adds more than a couple percentage points beyond it.
+Target share is the standout exception for WR/TE, consistent with usage
+being "stickier" than results in standard fantasy-analytics practice. See
+`build-production-weights.mjs`'s doc comment for the full method, including
+why it tests each metric's _incremental_ value (does it explain what FPTS/G
+gets wrong) rather than a 1-vs-1 contest against FPTS/G, which would
+understate metrics that are simply correlated with FPTS/G itself.
 
 **Line profiles.** FantasyPros publishes no line grades, so both scales are
 proxies from the advanced reports. Pass protection is the inverted pressure

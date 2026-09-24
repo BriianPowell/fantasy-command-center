@@ -128,6 +128,54 @@ describe('buildProductionScores', () => {
     ).toBeUndefined()
   })
 
+  it('ranks the higher-FPTS/G back first even when a lower-scoring back has flashier category stats (issue #38 regression)', () => {
+    // Real 2021 RB lines: Jonathan Taylor led all RBs in FPTS/G (19.6) but
+    // ranked behind Austin Ekeler (17.1 FPTS/G) under the old hand-picked
+    // weights, because Ekeler's touchdown rate and reception volume scored
+    // higher on those individual components. The validated weights
+    // (derived in build-production-weights.mjs) correct this: FPTS/G
+    // dominates the score, so the back who actually scored more per game
+    // outranks the back who merely had flashier category rates.
+    const higherFppgLowerCategories = {
+      playerName: 'Higher FPTS/G',
+      position: 'RB',
+      season: '2021',
+      team: 'AAA',
+      games: 17,
+      fantasyPoints: 333.1,
+      fantasyPointsPerGame: 19.6,
+      rushingYards: 1811,
+      rushingTouchdowns: 18,
+      receptions: 40,
+      receivingYards: 360,
+      receivingTouchdowns: 2,
+    }
+    const lowerFppgHigherCategories = {
+      playerName: 'Lower FPTS/G',
+      position: 'RB',
+      season: '2021',
+      team: 'BBB',
+      games: 16,
+      fantasyPoints: 273.8,
+      fantasyPointsPerGame: 17.1,
+      rushingYards: 911,
+      rushingTouchdowns: 12,
+      receptions: 70,
+      receivingYards: 520,
+      receivingTouchdowns: 8,
+    }
+
+    const scores = byName(
+      buildProductionScores([higherFppgLowerCategories, lowerFppgHigherCategories])
+    )
+
+    expect(scores['Higher FPTS/G'].productionScore).toBeGreaterThan(
+      scores['Lower FPTS/G'].productionScore
+    )
+    expect(scores['Higher FPTS/G'].positionRank).toBe(1)
+    expect(scores['Lower FPTS/G'].positionRank).toBe(2)
+  })
+
   it('exposes the component percentiles behind each score', () => {
     const { Best } = byName(buildProductionScores(COHORT))
 

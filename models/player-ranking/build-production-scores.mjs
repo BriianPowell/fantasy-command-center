@@ -112,23 +112,39 @@ const statPerGame = (key) => (record) =>
 /**
  * Per-position metrics and weights. Weights sum to 1 so every score lands
  * on the same 0-100 scale regardless of how many metrics a position uses.
+ *
+ * These weights are derived, not hand-picked: `build-production-weights.mjs`
+ * cross-validates each metric as a predictor of a player's OWN next season
+ * (leave-one-transition-out, 2021->22 ... 2024->25) and only credits it with
+ * weight if it explains variance FPTS/G alone doesn't already capture — see
+ * that file's doc comment for the full method. Regenerate with
+ * `npm run data:weights` and compare `production_weight_validation.json`'s
+ * `weights` against the constants below before changing either.
+ *
+ * The real result is a genuine surprise relative to the old hand-picked
+ * splits (10-20% per category metric): FPTS/G alone already captures
+ * 97-99.5% of a position's next-season predictive power, and no category
+ * metric adds more than a couple percentage points on top of it. Target
+ * share is the standout exception worth naming — it is the most valuable
+ * incremental signal for both WR and TE, consistent with usage being
+ * "stickier" than results in standard fantasy-analytics practice.
  */
 const POSITION_SPECS = {
   QB: {
     minGames: 6,
     metrics: {
       fantasyPointsPerGame: {
-        weight: 0.45,
+        weight: 0.969,
         value: (r) => r.fantasyPointsPerGame,
       },
-      passingYardsPerGame: { weight: 0.2, value: perGame('passingYards') },
+      passingYardsPerGame: { weight: 0, value: perGame('passingYards') },
       passingTouchdownsPerGame: {
-        weight: 0.2,
+        weight: 0.004,
         value: perGame('passingTouchdowns'),
       },
-      rushingYardsPerGame: { weight: 0.1, value: perGame('rushingYards') },
+      rushingYardsPerGame: { weight: 0.021, value: perGame('rushingYards') },
       rushingTouchdownsPerGame: {
-        weight: 0.05,
+        weight: 0.006,
         value: perGame('rushingTouchdowns'),
       },
     },
@@ -137,36 +153,39 @@ const POSITION_SPECS = {
     minGames: 6,
     metrics: {
       fantasyPointsPerGame: {
-        weight: 0.45,
+        weight: 0.995,
         value: (r) => r.fantasyPointsPerGame,
       },
-      rushingYardsPerGame: { weight: 0.2, value: perGame('rushingYards') },
+      rushingYardsPerGame: { weight: 0.001, value: perGame('rushingYards') },
       touchdownsPerGame: {
-        weight: 0.15,
+        weight: 0,
         value: (r) =>
           r.games > 0
             ? ((r.rushingTouchdowns ?? 0) + (r.receivingTouchdowns ?? 0)) /
               r.games
             : 0,
       },
-      receptionsPerGame: { weight: 0.1, value: perGame('receptions') },
-      receivingYardsPerGame: { weight: 0.1, value: perGame('receivingYards') },
+      receptionsPerGame: { weight: 0.002, value: perGame('receptions') },
+      receivingYardsPerGame: {
+        weight: 0.002,
+        value: perGame('receivingYards'),
+      },
     },
   },
   WR: {
     minGames: 6,
     metrics: {
       fantasyPointsPerGame: {
-        weight: 0.45,
+        weight: 0.989,
         value: (r) => r.fantasyPointsPerGame,
       },
-      receivingYardsPerGame: { weight: 0.2, value: perGame('receivingYards') },
-      receptionsPerGame: { weight: 0.15, value: perGame('receptions') },
+      receivingYardsPerGame: { weight: 0, value: perGame('receivingYards') },
+      receptionsPerGame: { weight: 0.003, value: perGame('receptions') },
       receivingTouchdownsPerGame: {
-        weight: 0.15,
+        weight: 0,
         value: perGame('receivingTouchdowns'),
       },
-      targetShare: { weight: 0.05, value: (r) => r.targetShare ?? 0 },
+      targetShare: { weight: 0.008, value: (r) => r.targetShare ?? 0 },
     },
   },
   K: {
@@ -207,11 +226,42 @@ const POSITION_SPECS = {
   },
 }
 
-// Tight ends catch the same way receivers do; only the talent pool differs,
-// and that is handled by scoring within position.
-POSITION_SPECS.TE = { ...POSITION_SPECS.WR }
+// Tight ends catch the same way receivers do, so they share WR's metric
+// definitions — but their validated weights differ slightly (see the doc
+// comment above POSITION_SPECS), so TE gets its own weight values rather
+// than copying WR's spec wholesale.
+POSITION_SPECS.TE = {
+  minGames: POSITION_SPECS.WR.minGames,
+  metrics: {
+    fantasyPointsPerGame: {
+      ...POSITION_SPECS.WR.metrics.fantasyPointsPerGame,
+      weight: 0.99,
+    },
+    receivingYardsPerGame: {
+      ...POSITION_SPECS.WR.metrics.receivingYardsPerGame,
+      weight: 0.002,
+    },
+    receptionsPerGame: {
+      ...POSITION_SPECS.WR.metrics.receptionsPerGame,
+      weight: 0.001,
+    },
+    receivingTouchdownsPerGame: {
+      ...POSITION_SPECS.WR.metrics.receivingTouchdownsPerGame,
+      weight: 0,
+    },
+    targetShare: {
+      ...POSITION_SPECS.WR.metrics.targetShare,
+      weight: 0.007,
+    },
+  },
+}
 
 export const SCORED_POSITIONS = Object.keys(POSITION_SPECS)
+
+// Exported so build-production-weights.mjs can validate these exact metric
+// definitions against next-season outcomes, rather than a re-implemented
+// copy that could silently drift from what actually scores players.
+export { POSITION_SPECS }
 
 /**
  * Score one position-season cohort.
