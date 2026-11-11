@@ -14,6 +14,8 @@ read straight from there by the scripts under `models/`. See
 
 What does land here:
 
+- `sleeper/players-nfl.json` — cached `GET /players/nfl` master list used by
+  `npm run data:promote` for name→Sleeper ID matching.
 - `fantasypros/<season>/players.json`, `player-points-<position>.json`,
   `consensus-rankings-<position>.json` — optional live-API snapshots from
   `models/player-ranking/fetch-fantasypros.mjs`. Note `player-points` and

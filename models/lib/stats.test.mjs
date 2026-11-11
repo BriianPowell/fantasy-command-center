@@ -7,6 +7,7 @@ import {
   meanAbsoluteError,
   pearson,
   percentileScores,
+  quantile,
   ranksDescending,
   round,
   sum,
@@ -98,6 +99,32 @@ describe('meanAbsoluteError', () => {
 
   it('is 0 for empty input', () => {
     expect(meanAbsoluteError([], [])).toBe(0)
+  })
+})
+
+describe('quantile', () => {
+  it('returns the median at q=0.5 for an odd-length series', () => {
+    expect(quantile([1, 3, 5], 0.5)).toBe(3)
+  })
+
+  it('interpolates between the two nearest values', () => {
+    expect(quantile([1, 2, 3, 4], 0.5)).toBe(2.5)
+  })
+
+  it('returns the min/max at the 0 and 1 extremes', () => {
+    expect(quantile([5, 1, 3], 0)).toBe(1)
+    expect(quantile([5, 1, 3], 1)).toBe(5)
+  })
+
+  it('does not mutate the input array', () => {
+    const values = [3, 1, 2]
+    quantile(values, 0.5)
+    expect(values).toEqual([3, 1, 2])
+  })
+
+  it('handles degenerate inputs', () => {
+    expect(quantile([], 0.5)).toBe(0)
+    expect(quantile([7], 0.9)).toBe(7)
   })
 })
 

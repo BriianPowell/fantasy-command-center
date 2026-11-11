@@ -42,7 +42,7 @@ export function LeagueDashboard({
     () => data.rosters.find((roster) => roster.teamId === selectedTeamId),
     [data.rosters, selectedTeamId]
   )
-  const picks = data.draft?.picks ?? []
+  const picks = useMemo(() => data.draft?.picks ?? [], [data.draft?.picks])
   const selectedRoster = useMemo(() => {
     return buildDraftAwareRoster(baseRoster, picks, selectedTeamId)
   }, [baseRoster, picks, selectedTeamId])

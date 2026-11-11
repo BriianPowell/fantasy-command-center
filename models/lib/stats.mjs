@@ -128,3 +128,23 @@ export function round(value, decimals = 1) {
   const factor = 10 ** decimals
   return Math.round(value * factor) / factor
 }
+
+/**
+ * Linear-interpolated quantile of `values` at proportion `q` (0-1),
+ * matching the convention `numpy.percentile`/most stats packages use.
+ * Used to derive floor/ceiling bands from a real, empirical distribution
+ * of residuals rather than assuming they're normally distributed.
+ */
+export function quantile(values, q) {
+  if (values.length === 0) return 0
+  const sorted = [...values].sort((a, b) => a - b)
+  if (sorted.length === 1) return sorted[0]
+
+  const position = q * (sorted.length - 1)
+  const lower = Math.floor(position)
+  const upper = Math.ceil(position)
+  if (lower === upper) return sorted[lower]
+
+  const weight = position - lower
+  return sorted[lower] * (1 - weight) + sorted[upper] * weight
+}

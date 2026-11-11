@@ -43,6 +43,8 @@ npm run data:profiles       # team_oline_profiles.json + team_dline_profiles.jso
 npm run data:scores         # player_production_scores.json
 npm run data:correlations   # correlations.json, including the derived weights
 npm run data:weights        # production_weight_validation.json (re-validate before hand-updating POSITION_SPECS)
+npm run data:projections    # point_projections.json (calibrated FPTS/G projection + floor/ceiling)
+npm run data:promote        # src/data/generated/modelRankings.ts + modelProjections.ts (Sleeper match)
 ```
 
 Every script takes `--seasons 2024,2025` to narrow the run and `--source` to
@@ -66,15 +68,21 @@ beside the existing one rather than editing it.
 
 ## Artifacts
 
-| File                                | Produced by         | Contents                                                                |
-| ----------------------------------- | ------------------- | ----------------------------------------------------------------------- |
-| `historical_player_seasons.json`    | `data:import`       | `HistoricalPlayerSeason[]` for every player-season                      |
-| `ingest_manifest.json`              | `data:import`       | Per-file validation status for the run                                  |
-| `team_oline_profiles.json`          | `data:profiles`     | Pass-protection and run-blocking scores, ranks, tiers                   |
-| `team_dline_profiles.json`          | `data:profiles`     | Pass-rush and takeaway scores, ranks, tiers                             |
-| `player_production_scores.json`     | `data:scores`       | 0–100 production score per player-season                                |
-| `correlations.json`                 | `data:correlations` | Fitted relationships and the model weights they imply                   |
-| `production_weight_validation.json` | `data:weights`      | Per-metric next-season predictive validation and the weights it implies |
+| File                                | Produced by         | Contents                                                                                                                          |
+| ----------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `historical_player_seasons.json`    | `data:import`       | `HistoricalPlayerSeason[]` for every player-season                                                                                |
+| `ingest_manifest.json`              | `data:import`       | Per-file validation status for the run                                                                                            |
+| `team_oline_profiles.json`          | `data:profiles`     | Pass-protection and run-blocking scores, ranks, tiers                                                                             |
+| `team_dline_profiles.json`          | `data:profiles`     | Pass-rush and takeaway scores, ranks, tiers                                                                                       |
+| `player_production_scores.json`     | `data:scores`       | 0–100 production score per player-season                                                                                          |
+| `correlations.json`                 | `data:correlations` | Fitted relationships and the model weights they imply                                                                             |
+| `production_weight_validation.json` | `data:weights`      | Per-metric next-season predictive validation and the weights it implies                                                           |
+| `point_projections.json`            | `data:projections`  | Calibrated production-score-to-FPTS/G curve, its validation, and projected FPTS/G + floor/ceiling for the latest season's players |
+| `app_promote_match_report.json`     | `data:promote`      | Sleeper ID match status for the promoted cohort                                                                                   |
+
+`data:promote` joins vendor names to Sleeper with generational suffix stripping,
+a small alias table in `player-name-aliases.mjs` (nicknames / stage names), and
+a unique name+position match even when the vendor team column lags a trade.
 
 ## How the scores are built
 
@@ -109,6 +117,25 @@ being "stickier" than results in standard fantasy-analytics practice. See
 why it tests each metric's _incremental_ value (does it explain what FPTS/G
 gets wrong) rather than a 1-vs-1 contest against FPTS/G, which would
 understate metrics that are simply correlated with FPTS/G itself.
+
+**Point projections.** `data:projections` calibrates the 0–100 production
+score into an actual forward point value: it joins every qualified
+player-season to his own next season, fits a single linear curve
+(`productionScore -> FPTS/G next season`) per position, and validates it
+with the same leave-one-transition-out CV and trusted gate as the sections
+above. Floor and ceiling come from the 20th/80th percentile of real
+out-of-fold residuals (an empirical ~60% band grounded in this exact
+calibration's actual historical misses, not an assumed distribution), and
+the calibrated rate scales to a season-total `projectedPoints` by a flat
+17-game assumption — not availability-adjusted, matching this model's
+"rates, not totals" philosophy elsewhere.
+
+This is a deliberate, narrow scope decision, not an oversight: the model
+stays a validated grading/ranking tool with a point-value bridge on top,
+_not_ a full rate × volume × adjustment projection engine. It does not
+project forward opportunity (snaps, targets, team pace, Vegas totals) or
+vary by week/matchup — see issue #43 for the reasoning and the explicitly
+out-of-scope list.
 
 **Line profiles.** FantasyPros publishes no line grades, so both scales are
 proxies from the advanced reports. Pass protection is the inverted pressure
